@@ -1,0 +1,2046 @@
+#!/bin/bash
+#
+# Copyright 2013 
+# Développé par : Stéphane HACQUARD
+# Date : 24-08-2013
+# Version 1.0
+# Pour plus de renseignements : stephane.hacquard@sargasses.fr
+
+
+
+#############################################################################
+# Variables d'environnement
+#############################################################################
+
+
+DIALOG=${DIALOG=dialog}
+
+REPERTOIRE_CONFIG=/usr/local/scripts/config
+FICHIER_CONFIG=config_centralisation
+
+REPERTOIRE_SCRIPTS=/usr/local/scripts
+FICHIER_SCRIPTS_CENTREON_LOCAL=sauvegarde_local.sh
+FICHIER_SCRIPTS_CENTREON_RESEAU=sauvegarde_reseau.sh
+FICHIER_SCRIPTS_CENTREON_FTP=sauvegarde_ftp.sh
+
+FICHIER_PURGE_CENTREON_LOCAL=purge_local.sh
+FICHIER_PURGE_CENTREON_RESEAU=purge_reseau.sh
+FICHIER_PURGE_CENTREON_FTP=purge_ftp.sh
+
+REPERTOIRE_CRON=/etc/cron.d
+FICHIER_CRON_SAUVEGARDE=sauvegarde
+
+TMP=/tmp
+
+DATE='`date '+%d-%m-%Y'`'
+DATE_HEURE='`date +%d.%m.%y`-`date +%H`h`date +%M`'
+
+
+#############################################################################
+# Fonction Verification installation de dialog
+#############################################################################
+
+
+if [ ! -f /usr/bin/dialog ] ; then
+	echo "Le programme dialog n'est pas installé!"
+	apt-get install dialog
+else
+	echo "Le programme dialog est déjà installé!"
+fi
+
+
+#############################################################################
+# Fonction Activation De La Banner Pour SSH
+#############################################################################
+
+
+if grep "^#Banner" /etc/ssh/sshd_config > /dev/null ; then
+	echo "Configuration de Banner en cours!"
+	sed -i "s/#Banner/Banner/g" /etc/ssh/sshd_config 
+	/etc/init.d/ssh reload
+else 
+	echo "Banner déjà activée!"
+fi
+
+
+#############################################################################
+# Fonction Lecture Fichier Configuration Gestion Centraliser
+#############################################################################
+
+lecture_config_centraliser()
+{
+
+if test -e $REPERTOIRE_CONFIG/$FICHIER_CONFIG ; then
+
+num=10
+while [ "$num" -le 15 ] 
+	do
+	VAR=VAR$num
+	VAL1=`cat $REPERTOIRE_CONFIG/$FICHIER_CONFIG | grep $VAR=`
+	VAL2=`expr length "$VAL1"`
+	VAL3=`expr substr "$VAL1" 7 $VAL2`
+	eval VAR$num="$VAL3"
+	num=`expr $num + 1`
+	done
+
+else 
+
+mkdir -p $REPERTOIRE_CONFIG
+
+num=10
+while [ "$num" -le 15 ] 
+	do
+	echo "VAR$num=" >> $REPERTOIRE_CONFIG/$FICHIER_CONFIG
+	num=`expr $num + 1`
+	done
+
+num=10
+while [ "$num" -le 15 ] 
+	do
+	VAR=VALFIC$num
+	VAL1=`cat $REPERTOIRE_CONFIG/$FICHIER_CONFIG | grep $VAR=`
+	VAL2=`expr length "$VAL1"`
+	VAL3=`expr substr "$VAL1" 7 $VAL2`
+	eval VAR$num="$VAL3"
+	num=`expr $num + 1`
+	done
+
+fi
+
+if [ "$VAR10" = "" ] ; then
+	REF10=`uname -n`
+else
+	REF10=$VAR10
+fi
+
+if [ "$VAR11" = "" ] ; then
+	REF11=3306
+else
+	REF11=$VAR11
+fi
+
+if [ "$VAR12" = "" ] ; then
+	REF12=sauvegarde
+else
+	REF12=$VAR12
+fi
+
+if [ "$VAR13" = "" ] ; then
+	REF13=root
+else
+	REF13=$VAR13
+fi
+
+if [ "$VAR14" = "" ] ; then
+	REF14=directory
+else
+	REF14=$VAR14
+fi
+
+}
+
+#############################################################################
+# Fonction Lecture Des Valeurs Dans La Base de Donnée
+#############################################################################
+
+lecture_valeurs_base_donnees()
+{
+
+lecture_config_centraliser
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
+
+cat <<- EOF > $fichtemp
+select user
+from sauvegarde_bases
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-user.txt
+
+lecture_user=$(sed '$!d' /tmp/lecture-user.txt)
+rm -f /tmp/lecture-user.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select password
+from sauvegarde_bases
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-password.txt
+
+lecture_password=$(sed '$!d' /tmp/lecture-password.txt)
+rm -f /tmp/lecture-password.txt
+rm -f $fichtemp
+
+
+cat <<- EOF > $fichtemp
+select base
+from sauvegarde_bases
+where uname='$choix_serveur' and application='centreon' ;
+
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-bases.txt
+
+sed -i '1d' /tmp/lecture-bases.txt
+
+lecture_bases_no1=$(sed -n '1p' /tmp/lecture-bases.txt)
+lecture_bases_no2=$(sed -n '2p' /tmp/lecture-bases.txt)
+lecture_bases_no3=$(sed -n '3p' /tmp/lecture-bases.txt)
+lecture_bases_no4=$(sed -n '4p' /tmp/lecture-bases.txt)
+rm -f /tmp/lecture-bases.txt
+rm -f $fichtemp
+
+
+cat <<- EOF > $fichtemp
+select nombre_bases
+from information
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/nombre-bases-lister.txt
+
+nombre_bases_lister=$(sed '$!d' /tmp/nombre-bases-lister.txt)
+rm -f /tmp/nombre-bases-lister.txt
+rm -f $fichtemp
+
+
+if [ "$nombre_bases_lister" = "" ] ; then
+
+cat <<- EOF > $fichtemp
+insert into information ( uname, nombre_bases, application )
+values ( '$choix_serveur' , '0' , 'centreon' ) ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+rm -f $fichtemp
+
+nombre_bases_lister=0
+
+fi
+
+
+if [ "$lecture_user" = "" ] ; then
+	REF20=root
+else
+	REF20=$lecture_user
+fi
+
+if [ "$lecture_password" = "" ] ; then
+	REF21=directory
+else
+	REF21=$lecture_password
+fi
+
+if [ "$lecture_bases_no1" = "" ] ; then
+	REF22=centreon
+else
+	REF22=$lecture_bases_no1
+fi
+
+if [ "$lecture_bases_no2" = "" ] ; then
+	REF23=centstorage
+else
+	REF23=$lecture_bases_no2
+fi
+
+
+cat <<- EOF > $fichtemp
+select chemin
+from sauvegarde_local
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-chemin.txt
+
+lecture_chemin=$(sed '$!d' /tmp/lecture-chemin.txt)
+rm -f /tmp/lecture-chemin.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures
+from sauvegarde_local
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures.txt
+
+lecture_heures=$(sed '$!d' /tmp/lecture-heures.txt)
+rm -f /tmp/lecture-heures.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select minutes
+from sauvegarde_local
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-minutes.txt
+
+lecture_minutes=$(sed '$!d' /tmp/lecture-minutes.txt)
+rm -f /tmp/lecture-minutes.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select jours
+from sauvegarde_local
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-jours.txt
+
+lecture_jours=$(sed '$!d' /tmp/lecture-jours.txt)
+rm -f /tmp/lecture-jours.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select retentions
+from sauvegarde_local
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-retentions.txt
+
+lecture_retentions=$(sed '$!d' /tmp/lecture-retentions.txt)
+rm -f /tmp/lecture-retentions.txt
+rm -f $fichtemp
+
+
+
+if [ "$lecture_chemin" = "" ] ; then
+	REF30=/sauvegarde
+else
+	REF30=$lecture_chemin
+fi
+
+if [ "$lecture_heures" = "" ] ; then
+	REF31=21
+else
+	REF31=$lecture_heures
+fi
+
+if [ "$lecture_minutes" = "" ] ; then
+	REF32=30
+else
+	REF32=$lecture_minutes
+fi
+
+if [ "$lecture_jours" = "" ] ; then
+	REF33=1-7
+else
+	REF33=$lecture_jours
+fi
+
+if [ "$lecture_retentions" = "" ] ; then
+	REF34=31
+	REF35=0
+else
+	REF34=$lecture_retentions
+	REF35=$lecture_retentions
+fi
+
+
+cat <<- EOF > $fichtemp
+select serveur
+from sauvegarde_reseau
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-serveur.txt
+
+lecture_serveur=$(sed '$!d' /tmp/lecture-serveur.txt)
+rm -f /tmp/lecture-serveur.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select partage
+from sauvegarde_reseau
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-partage.txt
+
+lecture_partage=$(sed '$!d' /tmp/lecture-partage.txt)
+rm -f /tmp/lecture-partage.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select utilisateur
+from sauvegarde_reseau
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-utilisateur.txt
+
+lecture_utilisateur=$(sed '$!d' /tmp/lecture-utilisateur.txt)
+rm -f /tmp/lecture-utilisateur.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select password
+from sauvegarde_reseau
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-password.txt
+
+lecture_password=$(sed '$!d' /tmp/lecture-password.txt)
+rm -f /tmp/lecture-password.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures
+from sauvegarde_reseau
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures.txt
+
+lecture_heures=$(sed '$!d' /tmp/lecture-heures.txt)
+rm -f /tmp/lecture-heures.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select minutes
+from sauvegarde_reseau
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-minutes.txt
+
+lecture_minutes=$(sed '$!d' /tmp/lecture-minutes.txt)
+rm -f /tmp/lecture-minutes.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select jours
+from sauvegarde_reseau
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-jours.txt
+
+lecture_jours=$(sed '$!d' /tmp/lecture-jours.txt)
+rm -f /tmp/lecture-jours.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select retentions
+from sauvegarde_reseau
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-retentions.txt
+
+lecture_retentions=$(sed '$!d' /tmp/lecture-retentions.txt)
+rm -f /tmp/lecture-retentions.txt
+rm -f $fichtemp
+
+
+if [ "$lecture_serveur" = "" ] ; then
+	REF40=`uname -n`
+else
+	REF40=$lecture_serveur
+fi
+
+if [ "$lecture_partage" = "" ] ; then
+	REF41=Sauvegarde
+else
+	REF41=$lecture_partage
+fi
+
+if [ "$lecture_utilisateur" = "" ] ; then
+	REF42=Administrateur
+else
+	REF42=$lecture_utilisateur
+fi
+
+if [ "$lecture_password" = "" ] ; then
+	REF43=admin
+else
+	REF43=$lecture_password
+fi
+
+if [ "$lecture_heures" = "" ] ; then
+	REF44=21
+else
+	REF44=$lecture_heures
+fi
+
+if [ "$lecture_minutes" = "" ] ; then
+	REF45=30
+else
+	REF45=$lecture_minutes
+fi
+
+if [ "$lecture_jours" = "" ] ; then
+	REF46=1-7
+else
+	REF46=$lecture_jours
+fi
+
+if [ "$lecture_retentions" = "" ] ; then
+	REF47=31
+	REF48=0
+else
+	REF47=$lecture_retentions
+	REF48=$lecture_retentions
+fi
+
+
+
+cat <<- EOF > $fichtemp
+select serveur
+from sauvegarde_ftp
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-serveur.txt
+
+lecture_serveur=$(sed '$!d' /tmp/lecture-serveur.txt)
+rm -f /tmp/lecture-serveur.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select dossier
+from sauvegarde_ftp
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-dossier.txt
+
+lecture_dossier=$(sed '$!d' /tmp/lecture-dossier.txt)
+rm -f /tmp/lecture-dossier.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select utilisateur
+from sauvegarde_ftp
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-utilisateur.txt
+
+lecture_utilisateur=$(sed '$!d' /tmp/lecture-utilisateur.txt)
+rm -f /tmp/lecture-utilisateur.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select password
+from sauvegarde_ftp
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-password.txt
+
+lecture_password=$(sed '$!d' /tmp/lecture-password.txt)
+rm -f /tmp/lecture-password.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures
+from sauvegarde_ftp
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures.txt
+
+lecture_heures=$(sed '$!d' /tmp/lecture-heures.txt)
+rm -f /tmp/lecture-heures.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select minutes
+from sauvegarde_ftp
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-minutes.txt
+
+lecture_minutes=$(sed '$!d' /tmp/lecture-minutes.txt)
+rm -f /tmp/lecture-minutes.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select jours
+from sauvegarde_ftp
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-jours.txt
+
+lecture_jours=$(sed '$!d' /tmp/lecture-jours.txt)
+rm -f /tmp/lecture-jours.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select retentions
+from sauvegarde_ftp
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-retentions.txt
+
+lecture_retentions=$(sed '$!d' /tmp/lecture-retentions.txt)
+rm -f /tmp/lecture-retentions.txt
+rm -f $fichtemp
+
+
+if [ "$lecture_serveur" = "" ] ; then
+	REF50=ftpperso.free.fr
+else
+	REF50=$lecture_serveur
+fi
+
+if [ "$lecture_dossier" = "" ] ; then
+	REF51=Sauvegarde
+else
+	REF51=$lecture_dossier
+fi
+
+if [ "$lecture_utilisateur" = "" ] ; then
+	REF52=Administrateur
+else
+	REF52=$lecture_utilisateur
+fi
+
+if [ "$lecture_password" = "" ] ; then
+	REF53=admin
+else
+	REF53=$lecture_password
+fi
+
+if [ "$lecture_heures" = "" ] ; then
+	REF54=21
+else
+	REF54=$lecture_heures
+fi
+
+if [ "$lecture_minutes" = "" ] ; then
+	REF55=30
+else
+	REF55=$lecture_minutes
+fi
+
+if [ "$lecture_jours" = "" ] ; then
+	REF56=1-7
+else
+	REF56=$lecture_jours
+fi
+
+if [ "$lecture_retentions" = "" ] ; then
+	REF57=31
+	REF58=0
+else
+	REF57=$lecture_retentions
+	REF58=$lecture_retentions
+fi
+
+
+
+cat <<- EOF > $fichtemp
+select cron_activer
+from sauvegarde_local
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-cron-local.txt
+
+lecture_cron_local=$(sed '$!d' /tmp/lecture-cron-local.txt)
+rm -f /tmp/lecture-cron-local.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select cron_activer
+from sauvegarde_reseau
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-cron-reseau.txt
+
+lecture_cron_reseau=$(sed '$!d' /tmp/lecture-cron-reseau.txt)
+rm -f /tmp/lecture-cron-reseau.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select cron_activer
+from sauvegarde_ftp
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-cron-ftp.txt
+
+lecture_cron_ftp=$(sed '$!d' /tmp/lecture-cron-ftp.txt)
+rm -f /tmp/lecture-cron-ftp.txt
+rm -f $fichtemp
+
+if [ "$lecture_cron_local" = "" ] ; then
+	lecture_cron_local=non
+fi
+
+if [ "$lecture_cron_reseau" = "" ] ; then
+	lecture_cron_reseau=non
+fi
+
+if [ "$lecture_cron_ftp" = "" ] ; then
+	lecture_cron_ftp=non
+fi
+
+}
+
+#############################################################################
+# Fonction Lecture Des Valeurs De Retention
+#############################################################################
+
+lecture_valeurs_retentions()
+{
+
+RETENTION_CENTREON_LOCAL='`date +%d-%m-%Y --date '"'$REF34 days ago'"'`'
+RETENTION_CENTREON_RESEAU='`date +%d-%m-%Y --date '"'$REF47 days ago'"'`'
+RETENTION_CENTREON_FTP='`date +%d-%m-%Y --date '"'$REF57 days ago'"'`'
+
+}
+
+#############################################################################
+# Fonction Creation Script Sauvegarde Local
+#############################################################################
+
+creation_script_sauvegarde_local()
+{
+
+lecture_valeurs_base_donnees
+lecture_valeurs_retentions
+
+
+
+
+chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+
+}
+
+#############################################################################
+# Fonction Creation Script Sauvegarde Reseau
+#############################################################################
+
+creation_script_sauvegarde_reseau()
+{
+
+lecture_valeurs_base_donnees
+lecture_valeurs_retentions
+
+
+
+chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+
+}
+
+#############################################################################
+# Fonction Creation Script Sauvegarde FTP
+#############################################################################
+
+creation_script_sauvegarde_ftp()
+{
+
+lecture_valeurs_base_donnees
+lecture_valeurs_retentions
+
+
+
+chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+
+}
+
+#############################################################################
+# Fonction Creation Exécution Script Purge Centreon Local
+#############################################################################
+
+creation_execution_script_purge_mysql_local()
+{
+
+
+cat <<- EOF > $fichtemp
+select retentions
+from sauvegarde_local
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-retentions.txt
+
+lecture_retentions=$(sed '$!d' /tmp/lecture-retentions.txt)
+rm -f /tmp/lecture-retentions.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select purges
+from sauvegarde_local
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-purges.txt
+
+lecture_purges=$(sed '$!d' /tmp/lecture-purges.txt)
+rm -f /tmp/lecture-purges.txt
+rm -f $fichtemp
+
+
+REF60=$lecture_retentions
+REF61=$lecture_purges
+
+
+if [ "$REF61" != "0" ] ; then
+if [ "$REF60" -le "$REF61" ] ; then
+
+REF61=`expr $REF61 + 1`
+
+while [ "$REF60" != "$REF61" ] 
+do
+PURGE='`date +%d-%m-%Y --date '"'$REF60 days ago'"'`'
+REF60=`expr $REF60 + 1`
+if [ ! -f $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_LOCAL ] ; then
+echo "rm -rf $REF30/$PURGE" > $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_LOCAL
+else
+echo "rm -rf $REF30/$PURGE" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_LOCAL
+fi
+done
+
+chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_LOCAL
+
+$REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_LOCAL
+rm -f $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_LOCAL
+
+fi
+fi
+
+}
+
+#############################################################################
+# Fonction Creation Exécution Script Purge Centreon Reseau
+#############################################################################
+
+creation_execution_script_purge_mysql_reseau()
+{
+
+
+cat <<- EOF > $fichtemp
+select retentions
+from sauvegarde_reseau
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-retentions.txt
+
+lecture_retentions=$(sed '$!d' /tmp/lecture-retentions.txt)
+rm -f /tmp/lecture-retentions.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select purges
+from sauvegarde_reseau
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-purges.txt
+
+lecture_purges=$(sed '$!d' /tmp/lecture-purges.txt)
+rm -f /tmp/lecture-purges.txt
+rm -f $fichtemp
+
+
+REF62=$lecture_retentions
+REF63=$lecture_purges
+
+
+if [ "$REF63" != "0" ] ; then
+if [ "$REF62" -le "$REF63" ] ; then
+
+REF63=`expr $REF63 + 1`
+
+echo "mkdir -p  /mnt/sauvegarde" > $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "mount -t smbfs -o username=$REF42,password=$REF43 //$REF40/$REF41 /mnt/sauvegarde" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+
+while [ "$REF62" != "$REF63" ] 
+do
+PURGE='`date +%d-%m-%Y --date '"'$REF62 days ago'"'`'
+REF62=`expr $REF62 + 1`
+echo "rm -rf /mnt/sauvegarde/$choix_serveur/CENTREON/$PURGE" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+done
+
+echo "umount /mnt/sauvegarde -l" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "rm -rf /mnt/sauvegarde" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+
+chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+
+$REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+rm -f $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+
+fi
+fi
+
+}
+
+#############################################################################
+# Fonction Creation Exécution Script Purge Centreon FTP
+#############################################################################
+
+creation_execution_script_purge_mysql_ftp()
+{
+
+
+cat <<- EOF > $fichtemp
+select retentions
+from sauvegarde_ftp
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-retentions.txt
+
+lecture_retentions=$(sed '$!d' /tmp/lecture-retentions.txt)
+rm -f /tmp/lecture-retentions.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select purges
+from sauvegarde_ftp
+where uname='$choix_serveur' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-purges.txt
+
+lecture_purges=$(sed '$!d' /tmp/lecture-purges.txt)
+rm -f /tmp/lecture-purges.txt
+rm -f $fichtemp
+
+
+REF64=$lecture_retentions
+REF65=$lecture_purges
+
+
+if [ "$REF65" != "0" ] ; then
+if [ "$REF64" -le "$REF65" ] ; then
+
+REF65=`expr $REF65 + 1`
+
+echo "ftp -i -n $REF50 <<purge-ftp" > $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "user $REF52 $REF53" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "mkdir $REF51" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "mkdir $REF51/$choix_serveur" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "mkdir $REF51/$choix_serveur/CENTREON" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "cd $REF51/$choix_serveur/CENTREON" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+
+while [ "$REF64" != "$REF65" ] 
+do
+PURGE='`date +%d-%m-%Y --date '"'$REF64 days ago'"'`'
+REF64=`expr $REF64 + 1`
+echo "mdelete $PURGE" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "rmdir $PURGE" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+done
+
+echo "bye" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "quit" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "purge-ftp" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+
+chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+
+$REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP &> /dev/null
+rm -f $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+
+fi
+fi
+
+}
+
+#############################################################################
+# Fonction Creation Cron Sauvegarde Centreon
+#############################################################################
+
+creation_fichier_cron_sauvegarde()
+{
+
+lecture_valeurs_base_donnees
+
+
+cat <<- EOF > $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
+################### Fichier Cron Sauvegarde ###################
+
+###### Sauvegarde Centreon Local
+
+
+###### Sauvegarde Centreon Reseau
+
+
+###### Sauvegarde Centreon FTP
+
+
+################### Fichier Cron Sauvegarde ###################
+EOF
+
+
+if [ "$lecture_cron_local" = "oui" ] ; then
+	ligne=$(sed -n '/###### Sauvegarde Centreon Local/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
+	sed -i "`expr $ligne + 2`"i"$REF32 $REF31 * * $REF33 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
+fi
+
+if [ "$lecture_cron_local" = "non" ] ; then
+	ligne=$(sed -n '/###### Sauvegarde Centreon Local/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
+	sed -i "`expr $ligne + 2`"i"#$REF32 $REF31 * * $REF33 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
+fi
+
+if [ "$lecture_cron_reseau" = "oui" ] ; then
+	ligne=$(sed -n '/###### Sauvegarde Centreon Reseau/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
+	sed -i "`expr $ligne + 2`"i"$REF45 $REF44 * * $REF46 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
+fi
+
+if [ "$lecture_cron_reseau" = "non" ] ; then
+	ligne=$(sed -n '/###### Sauvegarde Centreon Reseau/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
+	sed -i "`expr $ligne + 2`"i"#$REF45 $REF44 * * $REF46 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
+fi
+
+if [ "$lecture_cron_ftp" = "oui" ] ; then
+	ligne=$(sed -n '/###### Sauvegarde Centreon FTP/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
+	sed -i "`expr $ligne + 2`"i"$REF55 $REF54 * * $REF56 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
+fi
+
+if [ "$lecture_cron_ftp" = "non" ] ; then
+	ligne=$(sed -n '/###### Sauvegarde Centreon FTP/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
+	sed -i "`expr $ligne + 2`"i"#$REF55 $REF54 * * $REF56 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
+fi
+
+/etc/init.d/cron restart &> /dev/null
+
+}
+
+#############################################################################
+# Fonction Exécution Script Sauvegarde Local
+#############################################################################
+
+execution_script_sauvegarde_local()
+{
+
+$REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+
+}
+
+#############################################################################
+# Fonction Exécution Script Sauvegarde Reseau
+#############################################################################
+
+execution_script_sauvegarde_reseau()
+{
+
+$REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+
+}
+
+#############################################################################
+# Fonction Exécution Script Sauvegarde FTP
+#############################################################################
+
+execution_script_sauvegarde_ftp()
+{
+
+$REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+
+}
+
+#############################################################################
+# Fonction Suppression Script Sauvegarde Local
+#############################################################################
+
+suppression_script_sauvegarde_local()
+{
+
+rm -f $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+
+}
+
+#############################################################################
+# Fonction Suppression Script Sauvegarde Reseau
+#############################################################################
+
+suppression_script_sauvegarde_reseau()
+{
+
+rm -f $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+
+}
+
+#############################################################################
+# Fonction Suppression Script Sauvegarde FTP
+#############################################################################
+
+suppression_script_sauvegarde_ftp()
+{
+
+rm -f $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+
+}
+
+#############################################################################
+# Fonction Message d'erreur
+#############################################################################
+
+message_erreur()
+{
+	
+cat <<- EOF > /tmp/erreur
+Veuillez vous assurer que les parametres saisie
+                sont correcte
+EOF
+
+erreur=`cat /tmp/erreur`
+
+$DIALOG --ok-label "Quitter" \
+	 --colors \
+	 --backtitle "Parametrage Serveur Centreon" \
+	 --title "Erreur" \
+	 --msgbox  "\Z1$erreur\Zn" 6 52 
+
+rm -f /tmp/erreur
+
+}
+
+#############################################################################
+# Fonction Verification Couleur
+#############################################################################
+
+verification_couleur()
+{
+
+
+# 0=noir, 1=rouge, 2=vert, 3=jaune, 4=bleu, 5=magenta, 6=cyan 7=blanc
+
+if ! grep -w "OUI" $REPERTOIRE_CONFIG/$FICHIER_CONFIG > /dev/null ; then
+	choix1="\Z1Gestion Centraliser des Taches\Zn" 
+else
+	choix1="\Z2Gestion Centraliser des Taches\Zn" 
+fi
+
+if [ "$nombre_bases_lister" = "0" ] ; then
+	choix2="\Z1Configuration Bases Centreon\Zn" 
+else
+	choix2="\Z2Configuration Bases Centreon\Zn" 
+fi
+
+if [ "$lecture_cron_local" = "non" ] ; then
+	choix3="\Z1Activation Sauvegarde Local\Zn" 
+else
+	choix3="\Z2Activation Sauvegarde Local\Zn" 
+fi
+
+if [ "$lecture_cron_reseau" = "non" ] ; then
+	choix4="\Z1Activation Sauvegarde Reseau\Zn" 
+else
+	choix4="\Z2Activation Sauvegarde Reseau\Zn" 
+fi
+
+if [ "$lecture_cron_ftp" = "non" ] ; then
+	choix5="\Z1Activation Sauvegarde FTP\Zn" 
+else
+	choix5="\Z2Activation Sauvegarde FTP\Zn" 
+fi
+
+}
+
+#############################################################################
+# Fonction Menu 
+#############################################################################
+
+menu()
+{
+
+verification_couleur
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
+
+$DIALOG  --backtitle "Configuration Sauvegarde Centreon" \
+	  --title "Configuration Sauvegarde Centreon" \
+	  --clear \
+	  --colors \
+	  --default-item "3" \
+	  --menu "Quel est votre choix" 12 56 4 \
+	  "1" "$choix1" \
+	  "2" "Configuration Sauvegarde Centreon" \
+	  "3" "Quitter" 2> $fichtemp
+
+
+valret=$?
+choix=`cat $fichtemp`
+case $valret in
+
+ 0)	# Gestion Centraliser des Taches
+	if [ "$choix" = "1" ]
+	then
+		rm -f $fichtemp
+              menu_gestion_centraliser_taches
+	fi
+
+	# Configuration Sauvegarde Centreon
+	if [ "$choix" = "2" ]
+	then
+		rm -f $fichtemp
+		menu_choix_serveur
+	fi
+
+	# Quitter
+	if [ "$choix" = "3" ]
+	then
+		clear
+	fi
+	
+	;;
+
+
+ 1)	# Appuyé sur Touche CTRL C
+	echo "Appuyé sur Touche CTRL C."
+	;;
+
+ 255)	# Appuyé sur Touche Echap
+	echo "Appuyé sur Touche Echap."
+	;;
+
+esac
+
+rm -f $fichtemp
+
+exit
+
+}
+
+#############################################################################
+# Fonction Menu Gestion Centraliser des Taches
+#############################################################################
+
+menu_gestion_centraliser_taches()
+{
+
+lecture_config_centraliser
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
+
+$DIALOG  --backtitle "Configuration Sauvegarde" \
+	  --insecure \
+	  --title "Gestion Centraliser des Taches" \
+	  --mixedform "Quel est votre choix" 11 60 0 \
+	  "Nom Serveur:"     1 1  "$REF10"  1 24  28 26 0  \
+	  "Port Serveur:"    2 1  "$REF11"  2 24  28 26 0  \
+	  "Base de Donnees:" 3 1  "$REF12"  3 24  28 26 0  \
+	  "Compte Root:"     4 1  "$REF13"  4 24  28 26 0  \
+	  "Password Root:"   5 1  "$REF14"  5 24  28 26 1  2> $fichtemp
+
+
+valret=$?
+choix=`cat $fichtemp`
+case $valret in
+
+ 0)	# Gestion Centraliser des Taches
+	VARSAISI10=$(sed -n 1p $fichtemp)
+	VARSAISI11=$(sed -n 2p $fichtemp)
+	VARSAISI12=$(sed -n 3p $fichtemp)
+	VARSAISI13=$(sed -n 4p $fichtemp)
+	VARSAISI14=$(sed -n 5p $fichtemp)
+	
+
+	sed -i "s/VAR10=$VAR10/VAR10=$VARSAISI10/g" $REPERTOIRE_CONFIG/$FICHIER_CONFIG
+	sed -i "s/VAR11=$VAR11/VAR11=$VARSAISI11/g" $REPERTOIRE_CONFIG/$FICHIER_CONFIG
+	sed -i "s/VAR12=$VAR12/VAR12=$VARSAISI12/g" $REPERTOIRE_CONFIG/$FICHIER_CONFIG
+	sed -i "s/VAR13=$VAR13/VAR13=$VARSAISI13/g" $REPERTOIRE_CONFIG/$FICHIER_CONFIG
+	sed -i "s/VAR14=$VAR14/VAR14=$VARSAISI14/g" $REPERTOIRE_CONFIG/$FICHIER_CONFIG
+
+      
+	cat <<- EOF > /tmp/databases.txt
+	SHOW DATABASES;
+	EOF
+
+	mysql -h $VARSAISI10 -P $VARSAISI11 -u $VARSAISI13 -p$VARSAISI14 < /tmp/databases.txt &>/tmp/resultat.txt
+
+	if grep -w "^mysql" /tmp/resultat.txt > /dev/null ; then
+	sed -i "s/VAR15=$VAR15/VAR15=OUI/g" $REPERTOIRE_CONFIG/$FICHIER_CONFIG
+
+	cat <<- EOF > /tmp/creation_databases.txt
+	CREATE DATABASE IF NOT EXISTS $VARSAISI12;
+	EOF
+
+	mysql -h $VARSAISI10 -P $VARSAISI11 -u $VARSAISI13 -p$VARSAISI14 < /tmp/creation_databases.txt
+	rm -f /tmp/creation_databases.txt
+
+	else
+	sed -i "s/VAR15=$VAR15/VAR15=NON/g" $REPERTOIRE_CONFIG/$FICHIER_CONFIG
+	message_erreur
+	fi
+
+	rm -f /tmp/databases.txt
+	rm -f /tmp/resultat.txt
+	;;
+
+ 1)	# Appuyé sur Touche CTRL C
+	echo "Appuyé sur Touche CTRL C."
+	;;
+
+ 255)	# Appuyé sur Touche Echap
+	echo "Appuyé sur Touche Echap."
+	;;
+
+esac
+
+rm -f $fichtemp
+
+menu
+
+}
+
+#############################################################################
+# Fonction Menu Configuration Sauvegarde Centreon
+#############################################################################
+
+menu_configuration_sauvegarde_mysql()
+{
+
+lecture_valeurs_base_donnees
+verification_couleur
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
+
+$DIALOG  --backtitle "Configuration Sauvegarde Centreon" \
+	  --title "Configuration Sauvegarde Centreon" \
+	  --clear \
+	  --colors \
+	  --default-item "5" \
+	  --menu "Quel est votre choix" 12 54 5 \
+	  "1" "$choix2" \
+	  "2" "$choix3" \
+	  "3" "$choix4" \
+	  "4" "$choix5" \
+	  "5" "\Z4Retour\Zn" 2> $fichtemp
+
+
+valret=$?
+choix=`cat $fichtemp`
+case $valret in
+
+ 0)	# Menu Configuration Bases Centreon
+	if [ "$choix" = "1" ]
+	then
+		rm -f $fichtemp
+		menu_configuration_bases_centreon
+	fi
+
+	# Activation Sauvegarde Centreon Local
+	if [ "$choix" = "2" ]
+	then
+		rm -f $fichtemp
+		menu_activation_sauvegarde_mysql_local
+	fi
+
+	# Activation Sauvegarde Centreon Reseau
+	if [ "$choix" = "3" ]
+	then
+		rm -f $fichtemp
+		menu_activation_sauvegarde_mysql_reseau
+	fi
+
+	# Activation Sauvegarde Centreon FTP 
+	if [ "$choix" = "4" ]
+	then
+		rm -f $fichtemp
+		menu_activation_sauvegarde_mysql_ftp
+	fi
+
+	# Retour
+	if [ "$choix" = "5" ]
+	then
+		clear
+	fi
+	;;
+
+
+ 1)	# Appuyé sur Touche CTRL C
+	echo "Appuyé sur Touche CTRL C."
+	;;
+
+ 255)	# Appuyé sur Touche Echap
+	echo "Appuyé sur Touche Echap."
+	;;
+
+esac
+
+rm -f $fichtemp
+
+menu
+}
+
+#############################################################################
+# Fonction Menu Choix Serveur
+#############################################################################
+
+menu_choix_serveur()
+{
+
+lecture_config_centraliser
+serveur_local=`uname -n`
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
+
+$DIALOG  --backtitle "Configuration Sauvegarde Centreon" \
+	  --title "Configuration Serveur a Sauvegarder" \
+	  --form "Quel est votre choix" 8 50 1 \
+	  "Serveur:"  1 1  "`uname -n`"   1 10 20 0  2> $fichtemp
+
+
+choix_serveur=`cat $fichtemp`
+
+rm -f $fichtemp
+
+
+if [ "$choix_serveur" != "$serveur_local" ] ; then
+
+$DIALOG  --backtitle "Configuration Sauvegarde Centreon" \
+	  --insecure \
+	  --title "Configuration Compte Systeme Distant" \
+	  --mixedform "Quel est votre choix" 9 60 0 \
+	  "Utilisateur Root Serveur Distant:" 1 1  "root" 1 35  18 17 0  \
+	  "Password Root Serveur Distant:"    2 1  ""     2 32  21 20 1  2> $fichtemp
+
+
+valret=$?
+choix=`cat $fichtemp`
+case $valret in
+
+ 0)	# Configuration Compte Systeme Distant
+	VARSAISI10=$(sed -n 1p $fichtemp)
+	VARSAISI11=$(sed -n 2p $fichtemp)
+
+	echo "$VARSAISI10 $VARSAISI11"
+	;;
+
+ 1)	# Appuyé sur Touche CTRL C
+	echo "Appuyé sur Touche CTRL C."
+	;;
+
+ 255)	# Appuyé sur Touche Echap
+	echo "Appuyé sur Touche Echap."
+	;;
+
+esac
+
+rm -f $fichtemp
+
+fi
+
+menu_configuration_sauvegarde_mysql
+}
+
+
+
+#############################################################################
+# Fonction Menu Configuration Bases Centreon
+#############################################################################
+
+menu_configuration_bases_centreon()
+{
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
+
+$DIALOG  --backtitle "Configuration Sauvegarde Centreon" \
+	  --insecure \
+	  --title "Configuration Bases Centreon" \
+	  --mixedform "Quel est votre choix" 11 60 0 \
+	  "Utilisateur de la Base:" 1 1  "$REF20"     1 25  28 26 0  \
+	  "Password de la Base:"    2 1  "$REF21"     2 25  28 26 1  \
+	  "Nom de la Base:"         3 1  "$REF22"     3 25  28 26 0  \
+	  "Nom de la Base:"         4 1  "$REF23"     4 25  28 26 0  2> $fichtemp
+
+
+valret=$?
+choix=`cat $fichtemp`
+case $valret in
+
+ 0)	# Configuration Bases Centreon
+	VARSAISI10=$(sed -n 1p $fichtemp)
+	VARSAISI11=$(sed -n 2p $fichtemp)
+	VARSAISI12=$(sed -n 3p $fichtemp)
+	VARSAISI13=$(sed -n 4p $fichtemp)
+
+
+	cat <<- EOF > $fichtemp
+	update sauvegarde_local
+	set cron_activer= 'non' 
+	where uname='$choix_serveur' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	update sauvegarde_reseau
+	set cron_activer= 'non' 
+	where uname='$choix_serveur' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	update sauvegarde_ftp
+	set cron_activer= 'non' 
+	where uname='$choix_serveur' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	select distinct schema_name from information_schema.SCHEMATA;
+	EOF
+
+	mysql -h $choix_serveur -u $VARSAISI10 -p$VARSAISI11 < $fichtemp >/tmp/resultat.txt 2>&1
+
+	if ! grep -w "^$VARSAISI12" /tmp/resultat.txt > /dev/null ||
+	   ! grep -w "^$VARSAISI13" /tmp/resultat.txt > /dev/null ; then
+
+	cat <<- EOF > $fichtemp
+	delete from information
+	where uname='$choix_serveur' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	insert into information ( uname, nombre_bases, application )
+	values ( '$choix_serveur' , '0' , 'centreon' ) ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	creation_fichier_cron_sauvegarde
+	message_erreur
+
+	else
+	
+	cat <<- EOF > $fichtemp
+	delete from information
+	where uname='$choix_serveur' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	delete from sauvegarde_bases
+	where uname='$choix_serveur' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	optimize table sauvegarde_bases ; 
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp > /dev/null
+
+	rm -f $fichtemp
+	
+	cat <<- EOF > $fichtemp
+	insert into sauvegarde_bases ( uname, base, user, password, application )
+	values ( '$choix_serveur' , '$VARSAISI12' , '$VARSAISI10' , '$VARSAISI11' , 'centreon' ) ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	insert into sauvegarde_bases ( uname, base, user, password, application )
+	values ( '$choix_serveur' , '$VARSAISI13' , '$VARSAISI10' , '$VARSAISI11' , 'centreon' ) ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	alter table sauvegarde_bases order by uname ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	insert into information ( uname, nombre_bases, application )
+	values ( '$choix_serveur' , '2' , 'centreon' ) ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	alter table information order by uname ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	fi
+
+	rm -f /tmp/resultat.txt
+	suppression_script_sauvegarde_local
+	suppression_script_sauvegarde_reseau
+	suppression_script_sauvegarde_ftp
+	;;
+
+ 1)	# Appuyé sur Touche CTRL C
+	echo "Appuyé sur Touche CTRL C."
+	;;
+
+ 255)	# Appuyé sur Touche Echap
+	echo "Appuyé sur Touche Echap."
+	;;
+
+esac
+
+rm -f $fichtemp
+
+menu_configuration_sauvegarde_mysql
+
+}
+
+
+#############################################################################
+# Fonction Menu Activation Sauvegarde Centreon Local
+#############################################################################
+
+menu_activation_sauvegarde_mysql_local()
+{
+
+if [ "$nombre_bases_lister" = "0" ] ; then
+message_erreur
+else
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
+
+$DIALOG  --ok-label "Activation" \
+	  --extra-button \
+	  --extra-label "Desactivation" \
+	  --cancel-label "Execution" \
+	  --backtitle "Configuration Sauvegarde Centreon" \
+	  --title "Activation Sauvegarde Local" \
+	  --form "Activation Sauvegarde Local" 12 62 0 \
+	  "Chemin Sauvegarde Local:"    1 1 "$REF30"  1 28 28 0  \
+	  "Planification Des Heures:"   2 1 "$REF31"  2 28 28 0  \
+	  "Planification Des Minutes:"  3 1 "$REF32"  3 28 3  0  \
+	  "Planification Des Jours:"    4 1 "$REF33"  4 28 14 0  \
+	  "Choix De La Retention:"      5 1 "$REF34"  5 28 4  0  2> $fichtemp
+
+
+valret=$?
+choix=`cat $fichtemp`
+case $valret in
+
+ 0)	# Activation Sauvegarde Local
+	VARSAISI10=$(sed -n 1p $fichtemp)
+	VARSAISI11=$(sed -n 2p $fichtemp)
+	VARSAISI12=$(sed -n 3p $fichtemp)
+	VARSAISI13=$(sed -n 4p $fichtemp)
+	VARSAISI14=$(sed -n 5p $fichtemp)
+	VARSAISI15=$REF35
+
+	
+	cat <<- EOF > $fichtemp
+	delete from sauvegarde_local
+	where uname='$choix_serveur' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+	
+	cat <<- EOF > $fichtemp
+	insert into sauvegarde_local ( uname, chemin, heures, minutes, jours, retentions, purges, cron_activer, application )
+	values ( '$choix_serveur' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , 'oui' , 'centreon' ) ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	alter table sauvegarde_local order by uname ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	creation_script_sauvegarde_local
+	creation_fichier_cron_sauvegarde
+	creation_execution_script_purge_mysql_local
+	;;
+
+ 3)	# Désactivation Sauvegarde Local
+	VARSAISI10=$(sed -n 1p $fichtemp)
+	VARSAISI11=$(sed -n 2p $fichtemp)
+	VARSAISI12=$(sed -n 3p $fichtemp)
+	VARSAISI13=$(sed -n 4p $fichtemp)
+	VARSAISI14=$(sed -n 5p $fichtemp)
+	VARSAISI15=$REF35
+
+
+	cat <<- EOF > $fichtemp
+	delete from sauvegarde_local
+	where uname='$choix_serveur' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+	
+	cat <<- EOF > $fichtemp
+	insert into sauvegarde_local ( uname, chemin, heures, minutes, jours, retentions, purges, cron_activer, application )
+	values ( '$choix_serveur' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , 'non' , 'centreon' ) ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	alter table sauvegarde_local order by uname ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	creation_script_sauvegarde_local
+	creation_fichier_cron_sauvegarde
+	creation_execution_script_purge_mysql_local
+	;;
+
+ 1)	# Exécution Sauvegarde Local
+	rm -f $fichtemp
+	creation_script_sauvegarde_local
+	execution_script_sauvegarde_local
+	;;
+
+ 255)	# Appuyé sur Touche Echap
+	echo "Appuyé sur Touche Echap."
+	;;
+
+esac
+
+rm -f $fichtemp
+
+fi
+
+menu_configuration_sauvegarde_mysql
+}
+
+#############################################################################
+# Fonction Menu Activation Sauvegarde Centreon Reseau
+#############################################################################
+
+menu_activation_sauvegarde_mysql_reseau()
+{
+
+if [ "$nombre_bases_lister" = "0" ] ; then
+message_erreur
+else
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
+
+$DIALOG  --ok-label "Activation" \
+	  --extra-button \
+	  --extra-label "Desactivation" \
+	  --cancel-label "Execution" \
+	  --insecure \
+	  --backtitle "Configuration Sauvegarde Centreon" \
+	  --title "Activation Sauvegarde Reseau" \
+	  --mixedform "Activation Sauvegarde Reseau" 15 62 0 \
+	  "Serveur De Fichier:"         1 1 "$REF40"  1 28  28 28 0  \
+	  "Nom Du Partage Reseau:"      2 1 "$REF41"  2 28  28 28 0  \
+	  "Nom De L'Utilisateur:"       3 1 "$REF42"  3 28  28 28 0  \
+	  "Saisie Du Password:"         4 1 "$REF43"  4 28  28 28 0  \
+	  "Planification Des Heures:"   5 1 "$REF44"  5 28  28 28 0  \
+	  "Planification Des Minutes:"  6 1 "$REF45"  6 28  03 03 0  \
+	  "Planification Des Jours:"    7 1 "$REF46"  7 28  14 14 0  \
+	  "Choix De La Retention:"      8 1 "$REF47"  8 28  04 04 0  2> $fichtemp
+
+
+valret=$?
+choix=`cat $fichtemp`
+case $valret in
+
+ 0)	# Activation Sauvegarde Reseau
+	VARSAISI10=$(sed -n 1p $fichtemp)
+	VARSAISI11=$(sed -n 2p $fichtemp)
+	VARSAISI12=$(sed -n 3p $fichtemp)
+	VARSAISI13=$(sed -n 4p $fichtemp)
+	VARSAISI14=$(sed -n 5p $fichtemp)
+	VARSAISI15=$(sed -n 6p $fichtemp)
+	VARSAISI16=$(sed -n 7p $fichtemp)
+	VARSAISI17=$(sed -n 8p $fichtemp)
+	VARSAISI18=$REF48
+
+
+	cat <<- EOF > $fichtemp
+	delete from sauvegarde_reseau
+	where uname='$choix_serveur' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+	
+	cat <<- EOF > $fichtemp
+	insert into sauvegarde_reseau ( uname, serveur, partage, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, application )
+	values ( '$choix_serveur' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'oui' , 'centreon' ) ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	alter table sauvegarde_reseau order by uname ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	creation_script_sauvegarde_reseau
+	creation_fichier_cron_sauvegarde
+	creation_execution_script_purge_mysql_reseau
+	;;
+
+ 3)	# Désactivation Sauvegarde Reseau
+	VARSAISI10=$(sed -n 1p $fichtemp)
+	VARSAISI11=$(sed -n 2p $fichtemp)
+	VARSAISI12=$(sed -n 3p $fichtemp)
+	VARSAISI13=$(sed -n 4p $fichtemp)
+	VARSAISI14=$(sed -n 5p $fichtemp)
+	VARSAISI15=$(sed -n 6p $fichtemp)
+	VARSAISI16=$(sed -n 7p $fichtemp)
+	VARSAISI17=$(sed -n 8p $fichtemp)
+	VARSAISI18=$REF48
+
+
+	cat <<- EOF > $fichtemp
+	delete from sauvegarde_reseau
+	where uname='$choix_serveur' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+	
+	cat <<- EOF > $fichtemp
+	insert into sauvegarde_reseau ( uname, serveur, partage, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, application )
+	values ( '$choix_serveur' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'non' , 'centreon' ) ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	alter table sauvegarde_reseau order by uname ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	creation_script_sauvegarde_reseau
+	creation_fichier_cron_sauvegarde
+	creation_execution_script_purge_mysql_reseau
+	;;
+
+ 1)	# Exécution Sauvegarde Reseau
+	rm -f $fichtemp
+	creation_script_sauvegarde_reseau
+	execution_script_sauvegarde_reseau
+	;;
+
+ 255)	# Appuyé sur Touche Echap
+	echo "Appuyé sur Touche Echap."
+	;;
+
+esac
+
+rm -f $fichtemp
+
+fi
+
+menu_configuration_sauvegarde_mysql
+}
+
+#############################################################################
+# Fonction Menu Activation Sauvegarde Centreon FTP
+#############################################################################
+
+menu_activation_sauvegarde_mysql_ftp()
+{
+
+if [ "$nombre_bases_lister" = "0" ] ; then
+message_erreur
+else
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
+
+$DIALOG  --ok-label "Activation" \
+	  --extra-button \
+	  --extra-label "Desactivation" \
+	  --cancel-label "Execution" \
+	  --insecure \
+	  --backtitle "Configuration Sauvegarde Centreon" \
+	  --title "Activation Sauvegarde FTP" \
+	  --mixedform "Activation Sauvegarde FTP" 15 62 0 \
+	  "Nom Du Serveur FTP:"         1 1 "$REF50"  1 28  28 28 0  \
+	  "Nom Du Dossier FTP:"         2 1 "$REF51"  2 28  28 28 0  \
+	  "Nom De L'Utilisateur:"       3 1 "$REF52"  3 28  28 28 0  \
+	  "Saisie Du Password:"         4 1 "$REF53"  4 28  28 28 0  \
+	  "Planification Des Heures:"   5 1 "$REF54"  5 28  28 28 0  \
+	  "Planification Des Minutes:"  6 1 "$REF55"  6 28  03 03 0  \
+	  "Planification Des Jours:"    7 1 "$REF56"  7 28  14 14 0  \
+	  "Choix De La Retention:"      8 1 "$REF57"  8 28  04 04 0  2> $fichtemp
+
+
+valret=$?
+choix=`cat $fichtemp`
+case $valret in
+
+ 0)	# Activation Sauvegarde FTP
+	VARSAISI10=$(sed -n 1p $fichtemp)
+	VARSAISI11=$(sed -n 2p $fichtemp)
+	VARSAISI12=$(sed -n 3p $fichtemp)
+	VARSAISI13=$(sed -n 4p $fichtemp)
+	VARSAISI14=$(sed -n 5p $fichtemp)
+	VARSAISI15=$(sed -n 6p $fichtemp)
+	VARSAISI16=$(sed -n 7p $fichtemp)
+	VARSAISI17=$(sed -n 8p $fichtemp)
+	VARSAISI18=$REF58
+
+
+	cat <<- EOF > $fichtemp
+	delete from sauvegarde_ftp
+	where uname='$choix_serveur' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+	
+	cat <<- EOF > $fichtemp
+	insert into sauvegarde_ftp ( uname, serveur, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, application )
+	values ( '$choix_serveur' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'oui' , 'centreon' ) ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	alter table sauvegarde_ftp order by uname ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	creation_script_sauvegarde_ftp
+	creation_fichier_cron_sauvegarde
+	creation_execution_script_purge_mysql_ftp 
+	;;
+
+ 3)	# Désactivation Sauvegarde FTP
+	VARSAISI10=$(sed -n 1p $fichtemp)
+	VARSAISI11=$(sed -n 2p $fichtemp)
+	VARSAISI12=$(sed -n 3p $fichtemp)
+	VARSAISI13=$(sed -n 4p $fichtemp)
+	VARSAISI14=$(sed -n 5p $fichtemp)
+	VARSAISI15=$(sed -n 6p $fichtemp)
+	VARSAISI16=$(sed -n 7p $fichtemp)
+	VARSAISI17=$(sed -n 8p $fichtemp)
+	VARSAISI18=$REF58
+
+
+	cat <<- EOF > $fichtemp
+	delete from sauvegarde_ftp
+	where uname='$choix_serveur' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+	
+	cat <<- EOF > $fichtemp
+	insert into sauvegarde_ftp ( uname, serveur, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, application )
+	values ( '$choix_serveur' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'non' , 'centreon' ) ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	alter table sauvegarde_ftp order by uname ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	creation_script_sauvegarde_ftp
+	creation_fichier_cron_sauvegarde
+	creation_execution_script_purge_mysql_ftp
+	;;
+
+ 1)	# Exécution Sauvegarde FTP
+	rm -f $fichtemp
+	creation_script_sauvegarde_ftp
+	execution_script_sauvegarde_ftp
+	;;
+
+ 255)	# Appuyé sur Touche Echap
+	echo "Appuyé sur Touche Echap."
+	;;
+
+esac
+
+rm -f $fichtemp
+
+fi
+
+menu_configuration_sauvegarde_centreon
+}
+
+#############################################################################
+# Demarrage du programme
+#############################################################################
+
+menu
