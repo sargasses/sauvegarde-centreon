@@ -19,13 +19,13 @@ REPERTOIRE_CONFIG=/usr/local/scripts/config
 FICHIER_CONFIG=config_centralisation
 
 REPERTOIRE_SCRIPTS=/usr/local/scripts
-FICHIER_SCRIPTS_CENTREON_LOCAL=sauvegarde_local.sh
-FICHIER_SCRIPTS_CENTREON_RESEAU=sauvegarde_reseau.sh
-FICHIER_SCRIPTS_CENTREON_FTP=sauvegarde_ftp.sh
+FICHIER_SCRIPTS_CENTREON_LOCAL=sauvegarde_centreon_local.sh
+FICHIER_SCRIPTS_CENTREON_RESEAU=sauvegarde_centreon_reseau.sh
+FICHIER_SCRIPTS_CENTREON_FTP=sauvegarde_centreon_ftp.sh
 
-FICHIER_PURGE_CENTREON_LOCAL=purge_local.sh
-FICHIER_PURGE_CENTREON_RESEAU=purge_reseau.sh
-FICHIER_PURGE_CENTREON_FTP=purge_ftp.sh
+FICHIER_PURGE_CENTREON_LOCAL=purge_centreon_local.sh
+FICHIER_PURGE_CENTREON_RESEAU=purge_centreon_reseau.sh
+FICHIER_PURGE_CENTREON_FTP=purge_centreon_ftp.sh
 
 REPERTOIRE_CRON=/etc/cron.d
 FICHIER_CRON_SAUVEGARDE=sauvegarde
@@ -190,7 +190,6 @@ sed -i '1d' /tmp/lecture-bases.txt
 lecture_bases_no1=$(sed -n '1p' /tmp/lecture-bases.txt)
 lecture_bases_no2=$(sed -n '2p' /tmp/lecture-bases.txt)
 lecture_bases_no3=$(sed -n '3p' /tmp/lecture-bases.txt)
-lecture_bases_no4=$(sed -n '4p' /tmp/lecture-bases.txt)
 rm -f /tmp/lecture-bases.txt
 rm -f $fichtemp
 
@@ -248,6 +247,11 @@ else
 	REF23=$lecture_bases_no2
 fi
 
+if [ "$lecture_bases_no3" = "" ] ; then
+	REF24=centcore
+else
+	REF24=$lecture_bases_no3
+fi
 
 cat <<- EOF > $fichtemp
 select chemin
@@ -716,7 +720,13 @@ lecture_valeurs_base_donnees
 lecture_valeurs_retentions
 
 
-
+echo "mkdir -p $REF30/$DATE" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "mkdir -p /dump" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF22 --database >/dump/$REF22.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF23 --database >/dump/$REF23.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF24 --database >/dump/$REF24.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "tar cfvz $REF30/$DATE/centreon-$DATE_HEURE.tgz /var/lib/centreon/ /etc/centreon/ /dump/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "rm -rf /dump" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 
 chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 
@@ -758,7 +768,7 @@ chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 # Fonction Creation Exécution Script Purge Centreon Local
 #############################################################################
 
-creation_execution_script_purge_mysql_local()
+creation_execution_script_purge_local()
 {
 
 
@@ -821,7 +831,7 @@ fi
 # Fonction Creation Exécution Script Purge Centreon Reseau
 #############################################################################
 
-creation_execution_script_purge_mysql_reseau()
+creation_execution_script_purge_reseau()
 {
 
 
@@ -886,7 +896,7 @@ fi
 # Fonction Creation Exécution Script Purge Centreon FTP
 #############################################################################
 
-creation_execution_script_purge_mysql_ftp()
+creation_execution_script_purge_ftp()
 {
 
 
@@ -1298,7 +1308,7 @@ menu
 # Fonction Menu Configuration Sauvegarde Centreon
 #############################################################################
 
-menu_configuration_sauvegarde_mysql()
+menu_configuration_sauvegarde_centreon()
 {
 
 lecture_valeurs_base_donnees
@@ -1335,21 +1345,21 @@ case $valret in
 	if [ "$choix" = "2" ]
 	then
 		rm -f $fichtemp
-		menu_activation_sauvegarde_mysql_local
+		menu_activation_sauvegarde_centreon_local
 	fi
 
 	# Activation Sauvegarde Centreon Reseau
 	if [ "$choix" = "3" ]
 	then
 		rm -f $fichtemp
-		menu_activation_sauvegarde_mysql_reseau
+		menu_activation_sauvegarde_centreon_reseau
 	fi
 
 	# Activation Sauvegarde Centreon FTP 
 	if [ "$choix" = "4" ]
 	then
 		rm -f $fichtemp
-		menu_activation_sauvegarde_mysql_ftp
+		menu_activation_sauvegarde_centreon_ftp
 	fi
 
 	# Retour
@@ -1434,7 +1444,7 @@ rm -f $fichtemp
 
 fi
 
-menu_configuration_sauvegarde_mysql
+menu_configuration_sauvegarde_centreon
 }
 
 
@@ -1452,11 +1462,12 @@ fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 $DIALOG  --backtitle "Configuration Sauvegarde Centreon" \
 	  --insecure \
 	  --title "Configuration Bases Centreon" \
-	  --mixedform "Quel est votre choix" 11 60 0 \
+	  --mixedform "Quel est votre choix" 12 60 0 \
 	  "Utilisateur de la Base:" 1 1  "$REF20"     1 25  28 26 0  \
 	  "Password de la Base:"    2 1  "$REF21"     2 25  28 26 1  \
 	  "Nom de la Base:"         3 1  "$REF22"     3 25  28 26 0  \
-	  "Nom de la Base:"         4 1  "$REF23"     4 25  28 26 0  2> $fichtemp
+	  "Nom de la Base:"         4 1  "$REF23"     4 25  28 26 0  \
+	  "Nom de la Base:"         5 1  "$REF24"     5 25  28 26 0  2> $fichtemp
 
 
 valret=$?
@@ -1468,6 +1479,7 @@ case $valret in
 	VARSAISI11=$(sed -n 2p $fichtemp)
 	VARSAISI12=$(sed -n 3p $fichtemp)
 	VARSAISI13=$(sed -n 4p $fichtemp)
+	VARSAISI14=$(sed -n 5p $fichtemp)
 
 
 	cat <<- EOF > $fichtemp
@@ -1507,7 +1519,8 @@ case $valret in
 	mysql -h $choix_serveur -u $VARSAISI10 -p$VARSAISI11 < $fichtemp >/tmp/resultat.txt 2>&1
 
 	if ! grep -w "^$VARSAISI12" /tmp/resultat.txt > /dev/null ||
-	   ! grep -w "^$VARSAISI13" /tmp/resultat.txt > /dev/null ; then
+	   ! grep -w "^$VARSAISI13" /tmp/resultat.txt > /dev/null ||
+	   ! grep -w "^$VARSAISI14" /tmp/resultat.txt > /dev/null ; then
 
 	cat <<- EOF > $fichtemp
 	delete from information
@@ -1577,6 +1590,15 @@ case $valret in
 	rm -f $fichtemp
 
 	cat <<- EOF > $fichtemp
+	insert into sauvegarde_bases ( uname, base, user, password, application )
+	values ( '$choix_serveur' , '$VARSAISI14' , '$VARSAISI10' , '$VARSAISI11' , 'centreon' ) ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
 	alter table sauvegarde_bases order by uname ;
 	EOF
 
@@ -1586,7 +1608,7 @@ case $valret in
 
 	cat <<- EOF > $fichtemp
 	insert into information ( uname, nombre_bases, application )
-	values ( '$choix_serveur' , '2' , 'centreon' ) ;
+	values ( '$choix_serveur' , '3' , 'centreon' ) ;
 	EOF
 
 	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
@@ -1621,7 +1643,7 @@ esac
 
 rm -f $fichtemp
 
-menu_configuration_sauvegarde_mysql
+menu_configuration_sauvegarde_centreon
 
 }
 
@@ -1630,7 +1652,7 @@ menu_configuration_sauvegarde_mysql
 # Fonction Menu Activation Sauvegarde Centreon Local
 #############################################################################
 
-menu_activation_sauvegarde_mysql_local()
+menu_activation_sauvegarde_centreon_local()
 {
 
 if [ "$nombre_bases_lister" = "0" ] ; then
@@ -1695,7 +1717,7 @@ case $valret in
 
 	creation_script_sauvegarde_local
 	creation_fichier_cron_sauvegarde
-	creation_execution_script_purge_mysql_local
+	creation_execution_script_purge_local
 	;;
 
  3)	# Désactivation Sauvegarde Local
@@ -1735,7 +1757,7 @@ case $valret in
 
 	creation_script_sauvegarde_local
 	creation_fichier_cron_sauvegarde
-	creation_execution_script_purge_mysql_local
+	creation_execution_script_purge_local
 	;;
 
  1)	# Exécution Sauvegarde Local
@@ -1754,14 +1776,14 @@ rm -f $fichtemp
 
 fi
 
-menu_configuration_sauvegarde_mysql
+menu_configuration_sauvegarde_centreon
 }
 
 #############################################################################
 # Fonction Menu Activation Sauvegarde Centreon Reseau
 #############################################################################
 
-menu_activation_sauvegarde_mysql_reseau()
+menu_activation_sauvegarde_centreon_reseau()
 {
 
 if [ "$nombre_bases_lister" = "0" ] ; then
@@ -1833,7 +1855,7 @@ case $valret in
 
 	creation_script_sauvegarde_reseau
 	creation_fichier_cron_sauvegarde
-	creation_execution_script_purge_mysql_reseau
+	creation_execution_script_purge_reseau
 	;;
 
  3)	# Désactivation Sauvegarde Reseau
@@ -1876,7 +1898,7 @@ case $valret in
 
 	creation_script_sauvegarde_reseau
 	creation_fichier_cron_sauvegarde
-	creation_execution_script_purge_mysql_reseau
+	creation_execution_script_purge_reseau
 	;;
 
  1)	# Exécution Sauvegarde Reseau
@@ -1895,14 +1917,14 @@ rm -f $fichtemp
 
 fi
 
-menu_configuration_sauvegarde_mysql
+menu_configuration_sauvegarde_centreon
 }
 
 #############################################################################
 # Fonction Menu Activation Sauvegarde Centreon FTP
 #############################################################################
 
-menu_activation_sauvegarde_mysql_ftp()
+menu_activation_sauvegarde_centreon_ftp()
 {
 
 if [ "$nombre_bases_lister" = "0" ] ; then
@@ -1974,7 +1996,7 @@ case $valret in
 
 	creation_script_sauvegarde_ftp
 	creation_fichier_cron_sauvegarde
-	creation_execution_script_purge_mysql_ftp 
+	creation_execution_script_purge_ftp 
 	;;
 
  3)	# Désactivation Sauvegarde FTP
@@ -2017,7 +2039,7 @@ case $valret in
 
 	creation_script_sauvegarde_ftp
 	creation_fichier_cron_sauvegarde
-	creation_execution_script_purge_mysql_ftp
+	creation_execution_script_purge_ftp
 	;;
 
  1)	# Exécution Sauvegarde FTP
