@@ -2,7 +2,7 @@
 #
 # Copyright 2013 
 # Développé par : Stéphane HACQUARD
-# Date : 24-08-2013
+# Date : 27-08-2013
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -28,7 +28,7 @@ FICHIER_PURGE_CENTREON_RESEAU=purge_centreon_reseau.sh
 FICHIER_PURGE_CENTREON_FTP=purge_centreon_ftp.sh
 
 REPERTOIRE_CRON=/etc/cron.d
-FICHIER_CRON_SAUVEGARDE=sauvegarde
+FICHIER_CRON_SAUVEGARDE=sauvegarde_centreon
 
 TMP=/tmp
 
@@ -722,11 +722,14 @@ lecture_valeurs_retentions
 
 echo "mkdir -p $REF30/$DATE" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "mkdir -p /dump" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "rm -f $REF30/$DATE/centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF22 --database >/dump/$REF22.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF23 --database >/dump/$REF23.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF24 --database >/dump/$REF24.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "tar cfvz $REF30/$DATE/centreon-$DATE_HEURE.tgz /var/lib/centreon/ /etc/centreon/ /dump/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "rm -rf $REF30/$RETENTION_CENTREON_LOCAL" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "rm -rf /dump" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+
 
 chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 
@@ -742,6 +745,20 @@ creation_script_sauvegarde_reseau()
 lecture_valeurs_base_donnees
 lecture_valeurs_retentions
 
+
+echo "mkdir -p  /mnt/sauvegarde" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "mount -t smbfs -o username=$REF42,password=$REF43 //$REF40/$REF41 /mnt/sauvegarde" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "mkdir -p  /mnt/sauvegarde/$choix_serveur/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "rm -f /mnt/sauvegarde/$choix_serveur/Centreon/$DATE/centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "mkdir -p /dump" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF22 --database >/dump/$REF22.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF23 --database >/dump/$REF23.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF24 --database >/dump/$REF24.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "tar cfvz /mnt/sauvegarde/$choix_serveur/Centreon/$DATE/centreon-$DATE_HEURE.tgz /var/lib/centreon/ /etc/centreon/ /dump/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "rm -rf /mnt/sauvegarde/$choix_serveur/Centreon/$RETENTION_CENTREON_RESEAU" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "umount /mnt/sauvegarde -l" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "rm -rf /mnt/sauvegarde" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "rm -rf /dump" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 
 
 chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
@@ -974,7 +991,7 @@ lecture_valeurs_base_donnees
 
 
 cat <<- EOF > $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
-################### Fichier Cron Sauvegarde ###################
+################### Fichier Cron Sauvegarde Centreon ###################
 
 ###### Sauvegarde Centreon Local
 
@@ -985,7 +1002,7 @@ cat <<- EOF > $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
 ###### Sauvegarde Centreon FTP
 
 
-################### Fichier Cron Sauvegarde ###################
+################### Fichier Cron Sauvegarde Centreon ###################
 EOF
 
 
