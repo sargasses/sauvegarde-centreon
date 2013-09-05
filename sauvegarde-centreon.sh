@@ -2,7 +2,7 @@
 #
 # Copyright 2013 
 # Développé par : Stéphane HACQUARD
-# Date : 27-08-2013
+# Date : 05-09-2013
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -746,18 +746,18 @@ lecture_valeurs_base_donnees
 lecture_valeurs_retentions
 
 
-echo "mkdir -p  /mnt/sauvegarde" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "mount -t smbfs -o username=$REF42,password=$REF43 //$REF40/$REF41 /mnt/sauvegarde" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "mkdir -p  /mnt/sauvegarde/$choix_serveur/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "rm -f /mnt/sauvegarde/$choix_serveur/Centreon/$DATE/centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "mkdir -p  /mnt/sauvegarde-centreon" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "mount -t smbfs -o username=$REF42,password=$REF43 //$REF40/$REF41 /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "mkdir -p  /mnt/sauvegarde-centreon/$choix_serveur/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "rm -f /mnt/sauvegarde-centreon/$choix_serveur/Centreon/$DATE/centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "mkdir -p /dump" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF22 --database >/dump/$REF22.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF23 --database >/dump/$REF23.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF24 --database >/dump/$REF24.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "tar cfvz /mnt/sauvegarde/$choix_serveur/Centreon/$DATE/centreon-$DATE_HEURE.tgz /var/lib/centreon/ /etc/centreon/ /dump/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "rm -rf /mnt/sauvegarde/$choix_serveur/Centreon/$RETENTION_CENTREON_RESEAU" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "umount /mnt/sauvegarde -l" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "rm -rf /mnt/sauvegarde" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "tar cfvz /mnt/sauvegarde-centreon/$choix_serveur/Centreon/$DATE/centreon-$DATE_HEURE.tgz /var/lib/centreon/ /etc/centreon/ /dump/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "rm -rf /mnt/sauvegarde-centreon/$choix_serveur/Centreon/$RETENTION_CENTREON_RESEAU" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "umount /mnt/sauvegarde-centreon -l" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "rm -rf /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "rm -rf /dump" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 
 
@@ -912,18 +912,18 @@ if [ "$REF62" -le "$REF63" ] ; then
 
 REF63=`expr $REF63 + 1`
 
-echo "mkdir -p  /mnt/sauvegarde" > $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
-echo "mount -t smbfs -o username=$REF42,password=$REF43 //$REF40/$REF41 /mnt/sauvegarde" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "mkdir -p  /mnt/sauvegarde-centreon" > $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "mount -t smbfs -o username=$REF42,password=$REF43 //$REF40/$REF41 /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
 
 while [ "$REF62" != "$REF63" ] 
 do
 PURGE='`date +%d-%m-%Y --date '"'$REF62 days ago'"'`'
 REF62=`expr $REF62 + 1`
-echo "rm -rf /mnt/sauvegarde/$choix_serveur/Centreon/$PURGE" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "rm -rf /mnt/sauvegarde-centreon/$choix_serveur/Centreon/$PURGE" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
 done
 
-echo "umount /mnt/sauvegarde -l" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
-echo "rm -rf /mnt/sauvegarde" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "umount /mnt/sauvegarde-centreon -l" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "rm -rf /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
 
 chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
 
