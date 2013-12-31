@@ -154,7 +154,7 @@ fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 cat <<- EOF > $fichtemp
 select user
 from sauvegarde_bases
-where uname='$choix_serveur' and application='centreon' ;
+where uname='`uname -n`' and application='centreon' ;
 EOF
 
 mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-user.txt
@@ -723,9 +723,9 @@ lecture_valeurs_retentions
 echo "mkdir -p $REF30/$DATE" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "mkdir -p /dump" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "rm -f $REF30/$DATE/centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
-echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF22 --database >/dump/$REF22.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
-echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF23 --database >/dump/$REF23.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
-echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF24 --database >/dump/$REF24.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF22 --database >/dump/$REF22.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF23 --database >/dump/$REF23.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF24 --database >/dump/$REF24.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "tar cfvz $REF30/$DATE/centreon-$DATE_HEURE.tgz /var/lib/centreon/ /etc/centreon/ /dump/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "rm -rf $REF30/$RETENTION_CENTREON_LOCAL" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "rm -rf /dump" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
@@ -748,14 +748,14 @@ lecture_valeurs_retentions
 
 echo "mkdir -p  /mnt/sauvegarde-centreon" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "mount -t smbfs -o username=$REF42,password=$REF43 //$REF40/$REF41 /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "mkdir -p  /mnt/sauvegarde-centreon/$choix_serveur/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "rm -f /mnt/sauvegarde-centreon/$choix_serveur/Centreon/$DATE/centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "mkdir -p  /mnt/sauvegarde-centreon/`uname -n`/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "rm -f /mnt/sauvegarde-centreon/`uname -n`/Centreon/$DATE/centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "mkdir -p /dump" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF22 --database >/dump/$REF22.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF23 --database >/dump/$REF23.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF24 --database >/dump/$REF24.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "tar cfvz /mnt/sauvegarde-centreon/$choix_serveur/Centreon/$DATE/centreon-$DATE_HEURE.tgz /var/lib/centreon/ /etc/centreon/ /dump/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "rm -rf /mnt/sauvegarde-centreon/$choix_serveur/Centreon/$RETENTION_CENTREON_RESEAU" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF22 --database >/dump/$REF22.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF23 --database >/dump/$REF23.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF24 --database >/dump/$REF24.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "tar cfvz /mnt/sauvegarde-centreon/`uname -n`/Centreon/$DATE/centreon-$DATE_HEURE.tgz /var/lib/centreon/ /etc/centreon/ /dump/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "rm -rf /mnt/sauvegarde-centreon/`uname -n`/Centreon/$RETENTION_CENTREON_RESEAU" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "umount /mnt/sauvegarde-centreon -l" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "rm -rf /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "rm -rf /dump" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
@@ -779,21 +779,21 @@ lecture_valeurs_retentions
 echo "rm -rf $TMP/$DATE" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "mkdir -p $TMP/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "mkdir -p /dump" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF22 --database >/dump/$REF22.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF23 --database >/dump/$REF23.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "mysqldump -h $choix_serveur -u $REF20 -p$REF21 $REF24 --database >/dump/$REF24.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF22 --database >/dump/$REF22.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF23 --database >/dump/$REF23.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF24 --database >/dump/$REF24.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "tar cfvz $TMP/$DATE/centreon-$DATE_HEURE.tgz /var/lib/centreon/ /etc/centreon/ /dump/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "ftp -i -n $REF50 <<transfert-ftp" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "user $REF52 $REF53" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "mkdir $REF51" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "mkdir $REF51/$choix_serveur" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "mkdir $REF51/$choix_serveur/Centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "mkdir $REF51/$choix_serveur/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "cd $REF51/$choix_serveur/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "mkdir $REF51/`uname -n`" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "mkdir $REF51/`uname -n`/Centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "mkdir $REF51/`uname -n`/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "cd $REF51/`uname -n`/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "lcd $TMP/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "put centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "cd /" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "cd $REF51/$choix_serveur/Centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "cd $REF51/`uname -n`/Centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "mdelete $RETENTION_CENTREON_FTP" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "rmdir $RETENTION_CENTREON_FTP" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "bye" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
@@ -919,7 +919,7 @@ while [ "$REF62" != "$REF63" ]
 do
 PURGE='`date +%d-%m-%Y --date '"'$REF62 days ago'"'`'
 REF62=`expr $REF62 + 1`
-echo "rm -rf /mnt/sauvegarde-centreon/$choix_serveur/Centreon/$PURGE" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "rm -rf /mnt/sauvegarde-centreon/`uname -n`/Centreon/$PURGE" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
 done
 
 echo "umount /mnt/sauvegarde-centreon -l" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
@@ -980,9 +980,9 @@ REF65=`expr $REF65 + 1`
 echo "ftp -i -n $REF50 <<purge-ftp" > $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
 echo "user $REF52 $REF53" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
 echo "mkdir $REF51" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
-echo "mkdir $REF51/$choix_serveur" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
-echo "mkdir $REF51/$choix_serveur/Centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
-echo "cd $REF51/$choix_serveur/Centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "mkdir $REF51/`uname -n`" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "mkdir $REF51/`uname -n`/Centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "cd $REF51/`uname -n`/Centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
 
 while [ "$REF64" != "$REF65" ] 
 do
@@ -1427,8 +1427,6 @@ rm -f $fichtemp
 
 menu
 }
-
-
 
 #############################################################################
 # Fonction Menu Configuration Bases Centreon
