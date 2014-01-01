@@ -68,20 +68,13 @@ fi
 #############################################################################
 
 
-fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+if [ -f /sbin/mount.smbfs ] ; then
+CLIENT_SMB=smbfs
+fi
 
-apt-cache search smbfs >> $fichtemp
-apt-cache search cifs-utils  >> $fichtemp
-
-	if [ -f /sbin/mount.smbfs ] ; then
-	CLIENT_SMB=smbfs
-	fi
-
-	if [ -f /sbin/mount.cifs ] ; then
-	CLIENT_SMB=cifs
-	fi
-
-rm -f $fichtemp
+if [ -f /sbin/mount.cifs ] ; then
+CLIENT_SMB=cifs
+fi
 
 
 #############################################################################
