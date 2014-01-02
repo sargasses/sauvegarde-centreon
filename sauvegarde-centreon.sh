@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 01-01-2014
+# Date : 02-01-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -149,6 +149,121 @@ if [ "$VAR14" = "" ] ; then
 	REF14=directory
 else
 	REF14=$VAR14
+fi
+
+}
+
+#############################################################################
+# Fonction Nettoyage De La Base De Données Sauvegarde
+#############################################################################
+
+nettoyage_base_sauvegarde()
+{
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
+if [ "$VAR15" = "OUI" ] ; then
+
+if [ ! -f $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL ] &&
+   [ ! -f $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU ] &&
+   [ ! -f $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP ] &&
+   [ ! -f $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE ] ; then
+
+
+	cat <<- EOF > $fichtemp
+	delete from information
+	where uname='`uname -n`' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	optimize table information ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp > /dev/null
+
+	rm -f $fichtemp
+
+
+
+	cat <<- EOF > $fichtemp
+	delete from sauvegarde_bases
+	where uname='`uname -n`' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	optimize table sauvegarde_bases ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp > /dev/null
+
+	rm -f $fichtemp
+
+
+
+	cat <<- EOF > $fichtemp
+	delete from sauvegarde_local
+	where uname='`uname -n`' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	optimize table sauvegarde_local ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp > /dev/null
+
+	rm -f $fichtemp
+
+
+
+	cat <<- EOF > $fichtemp
+	delete from sauvegarde_reseau
+	where uname='`uname -n`' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	optimize table sauvegarde_reseau ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp > /dev/null
+
+	rm -f $fichtemp
+
+
+
+	cat <<- EOF > $fichtemp
+	delete from sauvegarde_ftp
+	where uname='`uname -n`' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	optimize table sauvegarde_ftp ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp > /dev/null
+
+	rm -f $fichtemp
+fi
+
 fi
 
 }
@@ -1220,6 +1335,7 @@ menu()
 {
 
 lecture_config_centraliser
+nettoyage_base_sauvegarde
 verification_couleur
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
