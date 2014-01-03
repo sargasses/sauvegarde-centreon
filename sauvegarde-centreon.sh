@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 02-01-2014
+# Date : 03-01-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -1758,7 +1758,7 @@ menu_configuration_sauvegarde_centreon
 
 
 #############################################################################
-# Fonction Menu Activation Sauvegarde Centreon Local
+# Fonction Menu Configuration Sauvegarde Centreon Local
 #############################################################################
 
 menu_configuration_sauvegarde_centreon_local()
@@ -1776,8 +1776,8 @@ $DIALOG  --ok-label "Activation" \
 	  --extra-label "Desactivation" \
 	  --cancel-label "Execution" \
 	  --backtitle "Configuration Sauvegarde Centreon" \
-	  --title "Activation Sauvegarde Local" \
-	  --form "Activation Sauvegarde Local" 12 62 0 \
+	  --title "Configuration Sauvegarde Local" \
+	  --form "Configuration Sauvegarde Local" 12 62 0 \
 	  "Chemin Sauvegarde Local:"    1 1 "$REF30"  1 28 28 0  \
 	  "Planification Des Heures:"   2 1 "$REF31"  2 28 28 0  \
 	  "Planification Des Minutes:"  3 1 "$REF32"  3 28 3  0  \
@@ -1889,7 +1889,7 @@ menu_configuration_sauvegarde_centreon
 }
 
 #############################################################################
-# Fonction Menu Activation Sauvegarde Centreon Reseau
+# Fonction Menu Configuration Sauvegarde Centreon Reseau
 #############################################################################
 
 menu_configuration_sauvegarde_centreon_reseau()
@@ -1908,8 +1908,8 @@ $DIALOG  --ok-label "Activation" \
 	  --cancel-label "Execution" \
 	  --insecure \
 	  --backtitle "Configuration Sauvegarde Centreon" \
-	  --title "Activation Sauvegarde Reseau" \
-	  --mixedform "Activation Sauvegarde Reseau" 15 62 0 \
+	  --title "Configuration Sauvegarde Reseau" \
+	  --mixedform "Configuration Sauvegarde Reseau" 15 62 0 \
 	  "Serveur De Fichier:"         1 1 "$REF40"  1 28  28 28 0  \
 	  "Nom Du Partage Reseau:"      2 1 "$REF41"  2 28  28 28 0  \
 	  "Nom De L'Utilisateur:"       3 1 "$REF42"  3 28  28 28 0  \
@@ -2030,7 +2030,7 @@ menu_configuration_sauvegarde_centreon
 }
 
 #############################################################################
-# Fonction Menu Activation Sauvegarde Centreon FTP
+# Fonction Menu Configuration Sauvegarde Centreon FTP
 #############################################################################
 
 menu_configuration_sauvegarde_centreon_ftp()
@@ -2049,8 +2049,8 @@ $DIALOG  --ok-label "Activation" \
 	  --cancel-label "Execution" \
 	  --insecure \
 	  --backtitle "Configuration Sauvegarde Centreon" \
-	  --title "Activation Sauvegarde FTP" \
-	  --mixedform "Activation Sauvegarde FTP" 15 62 0 \
+	  --title "Configuration Sauvegarde FTP" \
+	  --mixedform "Configuration Sauvegarde FTP" 15 62 0 \
 	  "Nom Du Serveur FTP:"         1 1 "$REF50"  1 28  28 28 0  \
 	  "Nom Du Dossier FTP:"         2 1 "$REF51"  2 28  28 28 0  \
 	  "Nom De L'Utilisateur:"       3 1 "$REF52"  3 28  28 28 0  \
