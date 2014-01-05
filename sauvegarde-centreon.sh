@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 03-01-2014
+# Date : 05-01-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -265,6 +265,8 @@ if [ ! -f $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL ] &&
 fi
 
 fi
+
+rm -f $fichtemp
 
 }
 
