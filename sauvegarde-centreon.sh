@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 08-01-2014
+# Date : 12-01-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -325,7 +325,6 @@ cat <<- EOF > $fichtemp
 select base
 from sauvegarde_bases
 where uname='`uname -n`' and application='centreon' ;
-
 EOF
 
 mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-bases.txt
