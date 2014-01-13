@@ -1531,7 +1531,7 @@ $DIALOG  --backtitle "Configuration Sauvegarde Centreon" \
 	  --clear \
 	  --colors \
 	  --default-item "5" \
-	  --menu "Quel est votre choix" 12 54 5 \
+	  --menu "Quel est votre choix" 12 58 5 \
 	  "1" "$choix2" \
 	  "2" "$choix3" \
 	  "3" "$choix4" \
