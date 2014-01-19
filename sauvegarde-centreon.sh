@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 13-01-2014
+# Date : 19-01-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -302,8 +302,6 @@ rm -f $fichtemp
 
 lecture_valeurs_base_donnees()
 {
-
-lecture_config_centraliser_sauvegarde
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
