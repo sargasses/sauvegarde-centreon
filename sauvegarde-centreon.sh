@@ -180,119 +180,89 @@ fi
 }
 
 #############################################################################
-# Fonction Nettoyage De La Base De Données Sauvegarde
+# Fonction Creation Automatique des Scripts Sauvegarde
 #############################################################################
 
-nettoyage_base_sauvegarde()
+creation_automatique_scripts_sauvegarde()
 {
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
-if [ "$VAR15" = "OUI" ] ; then
-
-if [ ! -f $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL ] &&
-   [ ! -f $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU ] &&
-   [ ! -f $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP ] &&
-   [ ! -f $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE ] ; then
+if [ "$VAR15" = "OUI" ]  ; then
 
 
 	cat <<- EOF > $fichtemp
-	delete from information
+	select nombre_bases
+	from information
 	where uname='`uname -n`' and application='centreon' ;
 	EOF
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/nombre-bases-lister.txt
 
+	nombre_bases_lister=$(sed '$!d' /tmp/nombre-bases-lister.txt)
+	rm -f /tmp/nombre-bases-lister.txt
 	rm -f $fichtemp
 
-	cat <<- EOF > $fichtemp
-	optimize table information ;
-	EOF
+	if [ "$nombre_bases_lister" != "0" ] ; then
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp > /dev/null
-
-	rm -f $fichtemp
-
-
+	creation_fichier_cron_sauvegarde
+	
+	fi
 
 	cat <<- EOF > $fichtemp
-	delete from sauvegarde_bases
+	select cron_activer
+	from sauvegarde_local
 	where uname='`uname -n`' and application='centreon' ;
 	EOF
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/cron-sauvegarde-local.txt
 
+	cron_sauvegarde_local=$(sed '$!d' /tmp/cron-sauvegarde-local.txt)
+	rm -f /tmp/cron-sauvegarde-local.txt
 	rm -f $fichtemp
 
-	cat <<- EOF > $fichtemp
-	optimize table sauvegarde_bases ;
-	EOF
+	if [ "$cron_sauvegarde_local" = "oui" ] ; then
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp > /dev/null
-
-	rm -f $fichtemp
-
-
+	creation_script_sauvegarde_local
+	
+	fi
 
 	cat <<- EOF > $fichtemp
-	delete from sauvegarde_local
+	select cron_activer
+	from sauvegarde_reseau
 	where uname='`uname -n`' and application='centreon' ;
 	EOF
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/cron-sauvegarde-reseau.txt
 
+	cron_sauvegarde_reseau=$(sed '$!d' /tmp/cron-sauvegarde-reseau.txt)
+	rm -f /tmp/cron-sauvegarde-reseau.txt
 	rm -f $fichtemp
 
-	cat <<- EOF > $fichtemp
-	optimize table sauvegarde_local ;
-	EOF
+	if [ "$cron_sauvegarde_reseau" = "oui" ] ; then
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp > /dev/null
-
-	rm -f $fichtemp
-
-
+	creation_script_sauvegarde_reseau
+	
+	fi
 
 	cat <<- EOF > $fichtemp
-	delete from sauvegarde_reseau
+	select cron_activer
+	from sauvegarde_ftp
 	where uname='`uname -n`' and application='centreon' ;
 	EOF
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/cron-sauvegarde-ftp.txt
 
+	cron_sauvegarde_ftp=$(sed '$!d' /tmp/cron-sauvegarde-ftp.txt)
+	rm -f /tmp/cron-sauvegarde-ftp.txt
 	rm -f $fichtemp
 
-	cat <<- EOF > $fichtemp
-	optimize table sauvegarde_reseau ;
-	EOF
+	if [ "$cron_sauvegarde_ftp" = "oui" ] ; then
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp > /dev/null
-
-	rm -f $fichtemp
-
-
-
-	cat <<- EOF > $fichtemp
-	delete from sauvegarde_ftp
-	where uname='`uname -n`' and application='centreon' ;
-	EOF
-
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
-
-	rm -f $fichtemp
-
-	cat <<- EOF > $fichtemp
-	optimize table sauvegarde_ftp ;
-	EOF
-
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp > /dev/null
-
-	rm -f $fichtemp
+	creation_script_sauvegarde_ftp
+	
+	fi
 fi
-
-fi
-
-rm -f $fichtemp
 
 }
 
@@ -1369,7 +1339,7 @@ menu()
 {
 
 lecture_config_centraliser_sauvegarde
-nettoyage_base_sauvegarde
+creation_automatique_scripts_sauvegarde
 verification_couleur
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
