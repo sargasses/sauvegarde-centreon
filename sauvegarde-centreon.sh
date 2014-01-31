@@ -188,7 +188,8 @@ creation_automatique_scripts_sauvegarde()
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
-if [ "$VAR15" = "OUI" ]  ; then
+if [ "$VAR15" = "OUI" ] &&
+   [ ! -f $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE ] ; then
 
 
 	cat <<- EOF > $fichtemp
