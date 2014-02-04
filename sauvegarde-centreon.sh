@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 03-02-2014
+# Date : 04-02-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -69,11 +69,11 @@ fi
 
 
 if [ -f /sbin/mount.smbfs ] ; then
-CLIENT_SMB=smbfs
+	CLIENT_SMB=smbfs
 fi
 
 if [ -f /sbin/mount.cifs ] ; then
-CLIENT_SMB=cifs
+	CLIENT_SMB=cifs
 fi
 
 
@@ -83,11 +83,11 @@ fi
 
 
 if [ -d /usr/local/nagios/libexec ] ; then
-PLUGINS=/usr/local/nagios/libexec
+	PLUGINS=/usr/local/nagios/libexec
 fi
 
 if [ -d /usr/local/centreon-plugins/libexec ] ; then
-PLUGINS=/usr/local/centreon-plugins/libexec
+	PLUGINS=/usr/local/centreon-plugins/libexec
 fi
 
 
@@ -1349,15 +1349,15 @@ verification_couleur
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
 
-$DIALOG  --backtitle "Configuration Sauvegarde Centreon" \
-	  --title "Configuration Sauvegarde Centreon" \
-	  --clear \
-	  --colors \
-	  --default-item "3" \
-	  --menu "Quel est votre choix" 12 60 4 \
-	  "1" "$choix1" \
-	  "2" "Configuration Sauvegarde Centreon" \
-	  "3" "Quitter" 2> $fichtemp
+$DIALOG --backtitle "Configuration Sauvegarde Centreon" \
+	 --title "Configuration Sauvegarde Centreon" \
+	 --clear \
+	 --colors \
+	 --default-item "3" \
+	 --menu "Quel est votre choix" 12 60 4 \
+	 "1" "$choix1" \
+	 "2" "Configuration Sauvegarde Centreon" \
+	 "3" "Quitter" 2> $fichtemp
 
 
 valret=$?
@@ -1421,15 +1421,15 @@ lecture_config_centraliser_sauvegarde
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
 
-$DIALOG  --backtitle "Configuration Sauvegarde Centreon" \
-	  --insecure \
-	  --title "Gestion Centraliser des Sauvegardes" \
-	  --mixedform "Quel est votre choix" 12 60 0 \
-	  "Nom Serveur:"     1 1  "$REF10"  1 20  30 28 0  \
-	  "Port Serveur:"    2 1  "$REF11"  2 20  30 28 0  \
-	  "Base de Donnees:" 3 1  "$REF12"  3 20  30 28 0  \
-	  "Compte Root:"     4 1  "$REF13"  4 20  30 28 0  \
-	  "Password Root:"   5 1  "$REF14"  5 20  30 28 1  2> $fichtemp
+$DIALOG --backtitle "Configuration Sauvegarde Centreon" \
+	 --insecure \
+	 --title "Gestion Centraliser des Sauvegardes" \
+	 --mixedform "Quel est votre choix" 12 60 0 \
+	 "Nom Serveur:"     1 1  "$REF10"  1 20  30 28 0  \
+	 "Port Serveur:"    2 1  "$REF11"  2 20  30 28 0  \
+	 "Base de Donnees:" 3 1  "$REF12"  3 20  30 28 0  \
+	 "Compte Root:"     4 1  "$REF13"  4 20  30 28 0  \
+	 "Password Root:"   5 1  "$REF14"  5 20  30 28 1  2> $fichtemp
 
 
 valret=$?
@@ -1498,17 +1498,17 @@ verification_couleur
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
 
-$DIALOG  --backtitle "Configuration Sauvegarde Centreon" \
-	  --title "Configuration Sauvegarde Centreon" \
-	  --clear \
-	  --colors \
-	  --default-item "5" \
-	  --menu "Quel est votre choix" 12 58 5 \
-	  "1" "$choix2" \
-	  "2" "$choix3" \
-	  "3" "$choix4" \
-	  "4" "$choix5" \
-	  "5" "\Z4Retour\Zn" 2> $fichtemp
+$DIALOG --backtitle "Configuration Sauvegarde Centreon" \
+	 --title "Configuration Sauvegarde Centreon" \
+	 --clear \
+	 --colors \
+	 --default-item "5" \
+	 --menu "Quel est votre choix" 12 58 5 \
+	 "1" "$choix2" \
+	 "2" "$choix3" \
+	 "3" "$choix4" \
+	 "4" "$choix5" \
+	 "5" "\Z4Retour\Zn" 2> $fichtemp
 
 
 valret=$?
@@ -1577,15 +1577,15 @@ menu_configuration_bases_centreon()
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
 
-$DIALOG  --backtitle "Configuration Sauvegarde Centreon" \
-	  --insecure \
-	  --title "Configuration Bases Centreon" \
-	  --mixedform "Quel est votre choix" 12 60 0 \
-	  "Utilisateur de la Base:" 1 1  "$REF20"     1 25  28 26 0  \
-	  "Password de la Base:"    2 1  "$REF21"     2 25  28 26 1  \
-	  "Nom de la Base:"         3 1  "$REF22"     3 25  28 26 0  \
-	  "Nom de la Base:"         4 1  "$REF23"     4 25  28 26 0  \
-	  "Nom de la Base:"         5 1  "$REF24"     5 25  28 26 0  2> $fichtemp
+$DIALOG --backtitle "Configuration Sauvegarde Centreon" \
+	 --insecure \
+	 --title "Configuration Bases Centreon" \
+	 --mixedform "Quel est votre choix" 12 60 0 \
+	 "Utilisateur de la Base:" 1 1  "$REF20"     1 25  28 26 0  \
+	 "Password de la Base:"    2 1  "$REF21"     2 25  28 26 1  \
+	 "Nom de la Base:"         3 1  "$REF22"     3 25  28 26 0  \
+	 "Nom de la Base:"         4 1  "$REF23"     4 25  28 26 0  \
+	 "Nom de la Base:"         5 1  "$REF24"     5 25  28 26 0  2> $fichtemp
 
 
 valret=$?
@@ -1765,7 +1765,6 @@ menu_configuration_sauvegarde_centreon
 
 }
 
-
 #############################################################################
 # Fonction Menu Configuration Sauvegarde Centreon Local
 #############################################################################
@@ -1780,18 +1779,18 @@ else
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
 
-$DIALOG  --ok-label "Activation" \
-	  --extra-button \
-	  --extra-label "Desactivation" \
-	  --cancel-label "Execution" \
-	  --backtitle "Configuration Sauvegarde Centreon" \
-	  --title "Configuration Sauvegarde Local" \
-	  --form "Configuration Sauvegarde Local" 12 62 0 \
-	  "Chemin Sauvegarde Local:"    1 1 "$REF30"  1 28 28 0  \
-	  "Planification Des Heures:"   2 1 "$REF31"  2 28 28 0  \
-	  "Planification Des Minutes:"  3 1 "$REF32"  3 28 3  0  \
-	  "Planification Des Jours:"    4 1 "$REF33"  4 28 14 0  \
-	  "Choix De La Retention:"      5 1 "$REF34"  5 28 4  0  2> $fichtemp
+$DIALOG --ok-label "Activation" \
+	 --extra-button \
+	 --extra-label "Desactivation" \
+	 --cancel-label "Execution" \
+	 --backtitle "Configuration Sauvegarde Centreon" \
+	 --title "Configuration Sauvegarde Local" \
+	 --form "Configuration Sauvegarde Local" 12 62 0 \
+	 "Chemin Sauvegarde Local:"    1 1 "$REF30"  1 28 28 0  \
+	 "Planification Des Heures:"   2 1 "$REF31"  2 28 28 0  \
+	 "Planification Des Minutes:"  3 1 "$REF32"  3 28 3  0  \
+	 "Planification Des Jours:"    4 1 "$REF33"  4 28 14 0  \
+	 "Choix De La Retention:"      5 1 "$REF34"  5 28 4  0  2> $fichtemp
 
 
 valret=$?
@@ -1912,22 +1911,22 @@ else
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
 
-$DIALOG  --ok-label "Activation" \
-	  --extra-button \
-	  --extra-label "Desactivation" \
-	  --cancel-label "Execution" \
-	  --insecure \
-	  --backtitle "Configuration Sauvegarde Centreon" \
-	  --title "Configuration Sauvegarde Reseau" \
-	  --mixedform "Configuration Sauvegarde Reseau" 15 62 0 \
-	  "Serveur De Fichier:"         1 1 "$REF40"  1 28  28 28 0  \
-	  "Nom Du Partage Reseau:"      2 1 "$REF41"  2 28  28 28 0  \
-	  "Nom De L'Utilisateur:"       3 1 "$REF42"  3 28  28 28 0  \
-	  "Saisie Du Password:"         4 1 "$REF43"  4 28  28 28 0  \
-	  "Planification Des Heures:"   5 1 "$REF44"  5 28  28 28 0  \
-	  "Planification Des Minutes:"  6 1 "$REF45"  6 28  03 03 0  \
-	  "Planification Des Jours:"    7 1 "$REF46"  7 28  14 14 0  \
-	  "Choix De La Retention:"      8 1 "$REF47"  8 28  04 04 0  2> $fichtemp
+$DIALOG --ok-label "Activation" \
+	 --extra-button \
+	 --extra-label "Desactivation" \
+	 --cancel-label "Execution" \
+	 --insecure \
+	 --backtitle "Configuration Sauvegarde Centreon" \
+	 --title "Configuration Sauvegarde Reseau" \
+	 --mixedform "Configuration Sauvegarde Reseau" 15 62 0 \
+	 "Serveur De Fichier:"         1 1 "$REF40"  1 28  28 28 0  \
+	 "Nom Du Partage Reseau:"      2 1 "$REF41"  2 28  28 28 0  \
+	 "Nom De L'Utilisateur:"       3 1 "$REF42"  3 28  28 28 0  \
+	 "Saisie Du Password:"         4 1 "$REF43"  4 28  28 28 0  \
+	 "Planification Des Heures:"   5 1 "$REF44"  5 28  28 28 0  \
+	 "Planification Des Minutes:"  6 1 "$REF45"  6 28  03 03 0  \
+	 "Planification Des Jours:"    7 1 "$REF46"  7 28  14 14 0  \
+	 "Choix De La Retention:"      8 1 "$REF47"  8 28  04 04 0  2> $fichtemp
 
 
 valret=$?
@@ -2054,22 +2053,22 @@ else
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
 
-$DIALOG  --ok-label "Activation" \
-	  --extra-button \
-	  --extra-label "Desactivation" \
-	  --cancel-label "Execution" \
-	  --insecure \
-	  --backtitle "Configuration Sauvegarde Centreon" \
-	  --title "Configuration Sauvegarde FTP" \
-	  --mixedform "Configuration Sauvegarde FTP" 15 62 0 \
-	  "Nom Du Serveur FTP:"         1 1 "$REF50"  1 28  28 28 0  \
-	  "Nom Du Dossier FTP:"         2 1 "$REF51"  2 28  28 28 0  \
-	  "Nom De L'Utilisateur:"       3 1 "$REF52"  3 28  28 28 0  \
-	  "Saisie Du Password:"         4 1 "$REF53"  4 28  28 28 0  \
-	  "Planification Des Heures:"   5 1 "$REF54"  5 28  28 28 0  \
-	  "Planification Des Minutes:"  6 1 "$REF55"  6 28  03 03 0  \
-	  "Planification Des Jours:"    7 1 "$REF56"  7 28  14 14 0  \
-	  "Choix De La Retention:"      8 1 "$REF57"  8 28  04 04 0  2> $fichtemp
+$DIALOG --ok-label "Activation" \
+	 --extra-button \
+	 --extra-label "Desactivation" \
+	 --cancel-label "Execution" \
+	 --insecure \
+	 --backtitle "Configuration Sauvegarde Centreon" \
+	 --title "Configuration Sauvegarde FTP" \
+	 --mixedform "Configuration Sauvegarde FTP" 15 62 0 \
+	 "Nom Du Serveur FTP:"         1 1 "$REF50"  1 28  28 28 0  \
+	 "Nom Du Dossier FTP:"         2 1 "$REF51"  2 28  28 28 0  \
+	 "Nom De L'Utilisateur:"       3 1 "$REF52"  3 28  28 28 0  \
+	 "Saisie Du Password:"         4 1 "$REF53"  4 28  28 28 0  \
+	 "Planification Des Heures:"   5 1 "$REF54"  5 28  28 28 0  \
+	 "Planification Des Minutes:"  6 1 "$REF55"  6 28  03 03 0  \
+	 "Planification Des Jours:"    7 1 "$REF56"  7 28  14 14 0  \
+	 "Choix De La Retention:"      8 1 "$REF57"  8 28  04 04 0  2> $fichtemp
 
 
 valret=$?
