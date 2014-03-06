@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 12-02-2014
+# Date : 06-03-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -835,6 +835,31 @@ RETENTION_CENTREON_FTP='`date +%d-%m-%Y --date '"'$REF57 days ago'"'`'
 }
 
 #############################################################################
+# Fonction Lecture Version Centreon
+#############################################################################
+
+lecture_version_centreon()
+{
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
+
+cat <<- EOF > $fichtemp
+select value
+from informations ;
+EOF
+
+mysql -h `uname -n` -u $REF20 -p$REF21 $REF22 < $fichtemp >/tmp/lecture-version-centreon.txt
+
+lecture_version_centreon=$(sed '$!d' /tmp/lecture-version-centreon.txt)
+rm -f /tmp/lecture-version-centreon.txt
+rm -f $fichtemp
+
+VERSION_CENTREON=$lecture_version_centreon
+
+}
+
+#############################################################################
 # Fonction Creation Script Sauvegarde Local
 #############################################################################
 
@@ -843,11 +868,13 @@ creation_script_sauvegarde_local()
 
 lecture_valeurs_base_donnees
 lecture_valeurs_retentions
+lecture_version_centreon
 
 
 echo "mkdir -p $REF30/$DATE" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "rm -f $REF30/$DATE/centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "mkdir -p /root/plateforme" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "echo "$VERSION_CENTREON" > /root/plateforme/centreon.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "echo "$PLATEFORME_LOCAL" > /root/plateforme/plateforme.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "mkdir -p /root/dump-mysql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF22 --databases > /root/dump-mysql/$REF22.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
@@ -873,6 +900,7 @@ creation_script_sauvegarde_reseau()
 
 lecture_valeurs_base_donnees
 lecture_valeurs_retentions
+lecture_version_centreon
 
 
 echo "mkdir -p  /mnt/sauvegarde-centreon" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
@@ -880,6 +908,7 @@ echo "mount -t $CLIENT_SMB -o username=$REF42,password=$REF43 //$REF40/$REF41 /m
 echo "mkdir -p  /mnt/sauvegarde-centreon/`uname -n`/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "rm -f /mnt/sauvegarde-centreon/`uname -n`/Centreon/$DATE/centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "mkdir -p /root/plateforme" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "echo "$VERSION_CENTREON" > /root/plateforme/centreon.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "echo "$PLATEFORME_LOCAL" > /root/plateforme/plateforme.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "mkdir -p /root/dump-mysql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF22 --databases > /root/dump-mysql/$REF22.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
@@ -907,11 +936,13 @@ creation_script_sauvegarde_ftp()
 
 lecture_valeurs_base_donnees
 lecture_valeurs_retentions
+lecture_version_centreon
 
 
 echo "rm -rf $TMP/$DATE" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "mkdir -p $TMP/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "mkdir -p /root/plateforme" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "echo "$VERSION_CENTREON" > /root/plateforme/centreon.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "echo "$PLATEFORME_LOCAL" > /root/plateforme/plateforme.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "mkdir -p /root/dump-mysql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF22 --databases > /root/dump-mysql/$REF22.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
