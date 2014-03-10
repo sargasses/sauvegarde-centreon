@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 06-03-2014
+# Date : 10-03-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -1437,7 +1437,6 @@ esac
 rm -f $fichtemp
 
 exit
-
 }
 
 #############################################################################
@@ -1513,7 +1512,6 @@ esac
 rm -f $fichtemp
 
 menu
-
 }
 
 #############################################################################
@@ -1595,7 +1593,6 @@ esac
 rm -f $fichtemp
 
 menu
-
 }
 
 #############################################################################
@@ -1793,7 +1790,6 @@ esac
 rm -f $fichtemp
 
 menu_configuration_sauvegarde_centreon
-
 }
 
 #############################################################################
@@ -1804,7 +1800,7 @@ menu_configuration_sauvegarde_centreon_local()
 {
 
 if [ "$nombre_bases_lister" = "0" ] ; then
-message_erreur
+	message_erreur
 else
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
@@ -1925,7 +1921,6 @@ rm -f $fichtemp
 fi
 
 menu_configuration_sauvegarde_centreon
-
 }
 
 #############################################################################
@@ -1936,7 +1931,7 @@ menu_configuration_sauvegarde_centreon_reseau()
 {
 
 if [ "$nombre_bases_lister" = "0" ] ; then
-message_erreur
+	message_erreur
 else
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
@@ -2067,7 +2062,6 @@ rm -f $fichtemp
 fi
 
 menu_configuration_sauvegarde_centreon
-
 }
 
 #############################################################################
@@ -2078,7 +2072,7 @@ menu_configuration_sauvegarde_centreon_ftp()
 {
 
 if [ "$nombre_bases_lister" = "0" ] ; then
-message_erreur
+	message_erreur
 else
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
@@ -2209,7 +2203,6 @@ rm -f $fichtemp
 fi
 
 menu_configuration_sauvegarde_centreon
-
 }
 
 #############################################################################
