@@ -903,11 +903,11 @@ lecture_valeurs_retentions
 lecture_version_centreon
 
 
-echo "mkdir -p  /mnt/sauvegarde-centreon" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "mkdir -p /mnt/sauvegarde-centreon" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "if ! grep "/mnt/sauvegarde-centreon" /etc/mtab &>/dev/null; then" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "mount -t $CLIENT_SMB -o username=$REF42,password=$REF43 //$REF40/$REF41 /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "fi" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "mkdir -p  /mnt/sauvegarde-centreon/`uname -n`/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "mkdir -p /mnt/sauvegarde-centreon/`uname -n`/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "rm -f /mnt/sauvegarde-centreon/`uname -n`/Centreon/$DATE/centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "mkdir -p /root/plateforme" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "echo "$VERSION_CENTREON" > /root/plateforme/centreon.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
@@ -1084,7 +1084,7 @@ if [ "$REF62" -le "$REF63" ] ; then
 
 REF63=`expr $REF63 + 1`
 
-echo "mkdir -p  /mnt/sauvegarde-centreon" > $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "mkdir -p /mnt/sauvegarde-centreon" > $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
 echo "if ! grep "/mnt/sauvegarde-centreon" /etc/mtab &>/dev/null; then" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
 echo "mount -t $CLIENT_SMB -o username=$REF42,password=$REF43 //$REF40/$REF41 /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
 echo "fi" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
