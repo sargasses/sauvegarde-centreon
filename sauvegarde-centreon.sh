@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 12-03-2014
+# Date : 13-03-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -822,19 +822,6 @@ fi
 }
 
 #############################################################################
-# Fonction Lecture Des Valeurs De Retention
-#############################################################################
-
-lecture_valeurs_retentions()
-{
-
-RETENTION_CENTREON_LOCAL='`date +%d-%m-%Y --date '"'$REF34 days ago'"'`'
-RETENTION_CENTREON_RESEAU='`date +%d-%m-%Y --date '"'$REF47 days ago'"'`'
-RETENTION_CENTREON_FTP='`date +%d-%m-%Y --date '"'$REF57 days ago'"'`'
-
-}
-
-#############################################################################
 # Fonction Lecture Version Centreon
 #############################################################################
 
@@ -856,6 +843,19 @@ rm -f /tmp/lecture-version-centreon.txt
 rm -f $fichtemp
 
 VERSION_CENTREON=$lecture_version_centreon
+
+}
+
+#############################################################################
+# Fonction Lecture Des Valeurs De Retention
+#############################################################################
+
+lecture_valeurs_retentions()
+{
+
+RETENTION_CENTREON_LOCAL='`date +%d-%m-%Y --date '"'$REF34 days ago'"'`'
+RETENTION_CENTREON_RESEAU='`date +%d-%m-%Y --date '"'$REF47 days ago'"'`'
+RETENTION_CENTREON_FTP='`date +%d-%m-%Y --date '"'$REF57 days ago'"'`'
 
 }
 
@@ -904,8 +904,8 @@ lecture_version_centreon
 
 
 echo "mkdir -p /mnt/sauvegarde-centreon" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "if ! grep "/mnt/sauvegarde-centreon" /etc/mtab &>/dev/null; then" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "mount -t $CLIENT_SMB -o username=$REF42,password=$REF43 //$REF40/$REF41 /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "if ! grep "/mnt/sauvegarde-centreon" /etc/mtab &>/dev/null ; then" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "	mount -t $CLIENT_SMB -o username=$REF42,password=$REF43 //$REF40/$REF41 /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "fi" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "mkdir -p /mnt/sauvegarde-centreon/`uname -n`/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "rm -f /mnt/sauvegarde-centreon/`uname -n`/Centreon/$DATE/centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
@@ -919,9 +919,10 @@ echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF24 --databases > /root/dump
 echo "cd /root" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "tar cfvz /mnt/sauvegarde-centreon/`uname -n`/Centreon/$DATE/centreon-$DATE_HEURE.tgz $PLUGINS/ /usr/local/centreon/www/img/media/ /var/lib/centreon/ /etc/centreon/ dump-mysql/ plateforme/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "rm -rf /mnt/sauvegarde-centreon/`uname -n`/Centreon/$RETENTION_CENTREON_RESEAU" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "if grep "/mnt/sauvegarde-centreon" /etc/mtab &>/dev/null; then" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "umount /mnt/sauvegarde-centreon -l" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "fi" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "while grep "/mnt/sauvegarde-centreon" /etc/mtab &>/dev/null ;" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "do" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "	umount /mnt/sauvegarde-centreon -l" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "done" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "rm -rf /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "rm -rf /root/dump-mysql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "rm -rf /root/plateforme" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
@@ -1085,8 +1086,8 @@ if [ "$REF62" -le "$REF63" ] ; then
 REF63=`expr $REF63 + 1`
 
 echo "mkdir -p /mnt/sauvegarde-centreon" > $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
-echo "if ! grep "/mnt/sauvegarde-centreon" /etc/mtab &>/dev/null; then" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
-echo "mount -t $CLIENT_SMB -o username=$REF42,password=$REF43 //$REF40/$REF41 /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "if ! grep "/mnt/sauvegarde-centreon" /etc/mtab &>/dev/null ; then" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "	mount -t $CLIENT_SMB -o username=$REF42,password=$REF43 //$REF40/$REF41 /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
 echo "fi" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
 
 while [ "$REF62" != "$REF63" ] 
@@ -1096,9 +1097,10 @@ REF62=`expr $REF62 + 1`
 echo "rm -rf /mnt/sauvegarde-centreon/`uname -n`/Centreon/$PURGE" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
 done
 
-echo "if grep "/mnt/sauvegarde-centreon" /etc/mtab &>/dev/null; then" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
-echo "umount /mnt/sauvegarde-centreon -l" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
-echo "fi" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "while grep "/mnt/sauvegarde-centreon" /etc/mtab &>/dev/null ;" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "do" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "	umount /mnt/sauvegarde-centreon -l" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "done" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
 echo "rm -rf /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
 
 chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
@@ -1753,6 +1755,7 @@ case $valret in
 	rm -f $fichtemp
 
 	cat <<- EOF > $fichtemp
+	alter table sauvegarde_bases order by application ;
 	alter table sauvegarde_bases order by uname ;
 	EOF
 
@@ -1770,6 +1773,7 @@ case $valret in
 	rm -f $fichtemp
 
 	cat <<- EOF > $fichtemp
+	alter table information order by application ;
 	alter table information order by uname ;
 	EOF
 
@@ -1860,6 +1864,7 @@ case $valret in
 	rm -f $fichtemp
 
 	cat <<- EOF > $fichtemp
+	alter table sauvegarde_local order by application ;
 	alter table sauvegarde_local order by uname ;
 	EOF
 
@@ -1900,6 +1905,7 @@ case $valret in
 	rm -f $fichtemp
 
 	cat <<- EOF > $fichtemp
+	alter table sauvegarde_local order by application ;
 	alter table sauvegarde_local order by uname ;
 	EOF
 
@@ -1998,6 +2004,7 @@ case $valret in
 	rm -f $fichtemp
 
 	cat <<- EOF > $fichtemp
+	alter table sauvegarde_reseau order by application ;
 	alter table sauvegarde_reseau order by uname ;
 	EOF
 
@@ -2041,6 +2048,7 @@ case $valret in
 	rm -f $fichtemp
 
 	cat <<- EOF > $fichtemp
+	alter table sauvegarde_reseau order by application ;
 	alter table sauvegarde_reseau order by uname ;
 	EOF
 
@@ -2139,6 +2147,7 @@ case $valret in
 	rm -f $fichtemp
 
 	cat <<- EOF > $fichtemp
+	alter table sauvegarde_ftp order by application ;
 	alter table sauvegarde_ftp order by uname ;
 	EOF
 
@@ -2182,6 +2191,7 @@ case $valret in
 	rm -f $fichtemp
 
 	cat <<- EOF > $fichtemp
+	alter table sauvegarde_ftp order by application ;
 	alter table sauvegarde_ftp order by uname ;
 	EOF
 
