@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 13-03-2014
+# Date : 15-03-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -919,10 +919,17 @@ echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF24 --databases > /root/dump
 echo "cd /root" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "tar cfvz /mnt/sauvegarde-centreon/`uname -n`/Centreon/$DATE/centreon-$DATE_HEURE.tgz $PLUGINS/ /usr/local/centreon/www/img/media/ /var/lib/centreon/ /etc/centreon/ dump-mysql/ plateforme/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "rm -rf /mnt/sauvegarde-centreon/`uname -n`/Centreon/$RETENTION_CENTREON_RESEAU" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "while grep "/mnt/sauvegarde-centreon" /etc/mtab &>/dev/null ;" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "do" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "	umount /mnt/sauvegarde-centreon -l" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "done" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "if grep "/mnt/sauvegarde-centreon" /etc/mtab &>/dev/null ; then" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "	grep /mnt/sauvegarde-centreon /etc/mtab > /tmp/nombres-mount.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "	nombres_mount=\$(sed -n '\$=' /tmp/nombres-mount.txt)" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "	num=1" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "	while [ "\$num" -le \$nombres_mount ]" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU 
+echo "		do" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "		umount /mnt/sauvegarde-centreon -l" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "		num=\`expr \$num + 1\`" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "	done" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "rm -f /tmp/nombres-mount.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "fi" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "rm -rf /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "rm -rf /root/dump-mysql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "rm -rf /root/plateforme" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
@@ -1097,10 +1104,17 @@ REF62=`expr $REF62 + 1`
 echo "rm -rf /mnt/sauvegarde-centreon/`uname -n`/Centreon/$PURGE" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
 done
 
-echo "while grep "/mnt/sauvegarde-centreon" /etc/mtab &>/dev/null ;" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
-echo "do" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
-echo "	umount /mnt/sauvegarde-centreon -l" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
-echo "done" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "if grep "/mnt/sauvegarde-centreon" /etc/mtab &>/dev/null ; then" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "	grep /mnt/sauvegarde-centreon /etc/mtab > /tmp/nombres-mount.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "	nombres_mount=\$(sed -n '\$=' /tmp/nombres-mount.txt)" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "	num=1" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "	while [ "\$num" -le \$nombres_mount ]" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "		do" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "		umount /mnt/sauvegarde-centreon -l" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "		num=\`expr \$num + 1\`" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "	done" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "rm -f /tmp/nombres-mount.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
+echo "fi" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
 echo "rm -rf /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
 
 chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_RESEAU
