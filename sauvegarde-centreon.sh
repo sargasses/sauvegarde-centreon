@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 15-03-2014
+# Date : 17-03-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -635,6 +635,18 @@ rm -f /tmp/lecture-serveur.txt
 rm -f $fichtemp
 
 cat <<- EOF > $fichtemp
+select port
+from sauvegarde_ftp
+where uname='`uname -n`' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-port.txt
+
+lecture_port=$(sed '$!d' /tmp/lecture-port.txt)
+rm -f /tmp/lecture-port.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
 select dossier
 from sauvegarde_ftp
 where uname='`uname -n`' and application='centreon' ;
@@ -725,48 +737,54 @@ else
 	REF50=$lecture_serveur
 fi
 
-if [ "$lecture_dossier" = "" ] ; then
-	REF51=Sauvegarde
+if [ "$lecture_port" = "" ] ; then
+	REF51=21
 else
-	REF51=$lecture_dossier
+	REF51=$lecture_port
+fi
+
+if [ "$lecture_dossier" = "" ] ; then
+	REF52=Sauvegarde
+else
+	REF52=$lecture_dossier
 fi
 
 if [ "$lecture_utilisateur" = "" ] ; then
-	REF52=Administrateur
+	REF53=Administrateur
 else
-	REF52=$lecture_utilisateur
+	REF53=$lecture_utilisateur
 fi
 
 if [ "$lecture_password" = "" ] ; then
-	REF53=admin
+	REF54=admin
 else
-	REF53=$lecture_password
+	REF54=$lecture_password
 fi
 
 if [ "$lecture_heures" = "" ] ; then
-	REF54=21
+	REF55=21
 else
-	REF54=$lecture_heures
+	REF55=$lecture_heures
 fi
 
 if [ "$lecture_minutes" = "" ] ; then
-	REF55=30
+	REF56=30
 else
-	REF55=$lecture_minutes
+	REF56=$lecture_minutes
 fi
 
 if [ "$lecture_jours" = "" ] ; then
-	REF56=1-7
+	REF57=1-7
 else
-	REF56=$lecture_jours
+	REF57=$lecture_jours
 fi
 
 if [ "$lecture_retentions" = "" ] ; then
-	REF57=31
-	REF58=0
+	REF58=31
+	REF59=0
 else
-	REF57=$lecture_retentions
 	REF58=$lecture_retentions
+	REF59=$lecture_retentions
 fi
 
 
@@ -855,7 +873,7 @@ lecture_valeurs_retentions()
 
 RETENTION_CENTREON_LOCAL='`date +%d-%m-%Y --date '"'$REF34 days ago'"'`'
 RETENTION_CENTREON_RESEAU='`date +%d-%m-%Y --date '"'$REF47 days ago'"'`'
-RETENTION_CENTREON_FTP='`date +%d-%m-%Y --date '"'$REF57 days ago'"'`'
+RETENTION_CENTREON_FTP='`date +%d-%m-%Y --date '"'$REF58 days ago'"'`'
 
 }
 
@@ -963,16 +981,16 @@ echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF24 --databases > /root/dump
 echo "cd /root" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "tar cfvz $TMP/$DATE/centreon-$DATE_HEURE.tgz $PLUGINS/ /usr/local/centreon/www/img/media/ /var/lib/centreon/ /etc/centreon/ dump-mysql/ plateforme/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "ftp -i -n $REF50 <<transfert-ftp" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "user $REF52 $REF53" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "mkdir $REF51" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "mkdir $REF51/`uname -n`" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "mkdir $REF51/`uname -n`/Centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "mkdir $REF51/`uname -n`/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "cd $REF51/`uname -n`/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "user $REF53 $REF54" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "mkdir $REF52" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "mkdir $REF52/`uname -n`" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "mkdir $REF52/`uname -n`/Centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "mkdir $REF52/`uname -n`/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "cd $REF52/`uname -n`/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "lcd $TMP/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "put centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "cd /" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "cd $REF51/`uname -n`/Centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "cd $REF52/`uname -n`/Centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "mdelete $RETENTION_CENTREON_FTP" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "rmdir $RETENTION_CENTREON_FTP" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "bye" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
@@ -1170,11 +1188,11 @@ if [ "$REF64" -le "$REF65" ] ; then
 REF65=`expr $REF65 + 1`
 
 echo "ftp -i -n $REF50 <<purge-ftp" > $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
-echo "user $REF52 $REF53" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
-echo "mkdir $REF51" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
-echo "mkdir $REF51/`uname -n`" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
-echo "mkdir $REF51/`uname -n`/Centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
-echo "cd $REF51/`uname -n`/Centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "user $REF53 $REF54" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "mkdir $REF52" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "mkdir $REF52/`uname -n`" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "mkdir $REF52/`uname -n`/Centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "cd $REF52/`uname -n`/Centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
 
 while [ "$REF64" != "$REF65" ] 
 do
@@ -1246,12 +1264,12 @@ fi
 
 if [ "$lecture_cron_ftp" = "oui" ] ; then
 	ligne=$(sed -n '/###### Sauvegarde Centreon FTP/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
-	sed -i "`expr $ligne + 2`"i"$REF55 $REF54 * * $REF56 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
+	sed -i "`expr $ligne + 2`"i"$REF56 $REF55 * * $REF57 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
 fi
 
 if [ "$lecture_cron_ftp" = "non" ] ; then
 	ligne=$(sed -n '/###### Sauvegarde Centreon FTP/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
-	sed -i "`expr $ligne + 2`"i"#$REF55 $REF54 * * $REF56 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
+	sed -i "`expr $ligne + 2`"i"#$REF56 $REF55 * * $REF57 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
 fi
 
 /etc/init.d/cron restart &> /dev/null
@@ -2115,15 +2133,16 @@ $DIALOG --ok-label "Activation" \
 	 --insecure \
 	 --backtitle "Configuration Sauvegarde Centreon" \
 	 --title "Configuration Sauvegarde FTP" \
-	 --mixedform "Configuration Sauvegarde FTP" 15 62 0 \
+	 --mixedform "Configuration Sauvegarde FTP" 16 62 0 \
 	 "Nom Du Serveur FTP:"         1 1 "$REF50"  1 28  28 28 0  \
-	 "Nom Du Dossier FTP:"         2 1 "$REF51"  2 28  28 28 0  \
-	 "Nom De L'Utilisateur:"       3 1 "$REF52"  3 28  28 28 0  \
-	 "Saisie Du Password:"         4 1 "$REF53"  4 28  28 28 0  \
-	 "Planification Des Heures:"   5 1 "$REF54"  5 28  28 28 0  \
-	 "Planification Des Minutes:"  6 1 "$REF55"  6 28  03 03 0  \
-	 "Planification Des Jours:"    7 1 "$REF56"  7 28  14 14 0  \
-	 "Choix De La Retention:"      8 1 "$REF57"  8 28  04 04 0  2> $fichtemp
+	 "Numero Port FTP:"            2 1 "$REF51"  2 28  28 28 0  \
+	 "Nom Du Dossier FTP:"         3 1 "$REF52"  3 28  28 28 0  \
+	 "Nom De L'Utilisateur:"       4 1 "$REF53"  4 28  28 28 0  \
+	 "Saisie Du Password:"         5 1 "$REF54"  5 28  28 28 0  \
+	 "Planification Des Heures:"   6 1 "$REF55"  6 28  28 28 0  \
+	 "Planification Des Minutes:"  7 1 "$REF56"  7 28  03 03 0  \
+	 "Planification Des Jours:"    8 1 "$REF58"  8 28  14 14 0  \
+	 "Choix De La Retention:"      9 1 "$REF59"  9 28  04 04 0  2> $fichtemp
 
 
 valret=$?
@@ -2139,7 +2158,8 @@ case $valret in
 	VARSAISI15=$(sed -n 6p $fichtemp)
 	VARSAISI16=$(sed -n 7p $fichtemp)
 	VARSAISI17=$(sed -n 8p $fichtemp)
-	VARSAISI18=$REF58
+	VARSAISI18=$(sed -n 9p $fichtemp)
+	VARSAISI19=$REF59
 
 
 	cat <<- EOF > $fichtemp
@@ -2152,8 +2172,8 @@ case $valret in
 	rm -f $fichtemp
 	
 	cat <<- EOF > $fichtemp
-	insert into sauvegarde_ftp ( uname, serveur, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, application )
-	values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'oui' , 'centreon' ) ;
+	insert into sauvegarde_ftp ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, application )
+	values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'oui' , 'centreon' ) ;
 	EOF
 
 	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
@@ -2183,7 +2203,8 @@ case $valret in
 	VARSAISI15=$(sed -n 6p $fichtemp)
 	VARSAISI16=$(sed -n 7p $fichtemp)
 	VARSAISI17=$(sed -n 8p $fichtemp)
-	VARSAISI18=$REF58
+	VARSAISI18=$(sed -n 9p $fichtemp)
+	VARSAISI19=$REF59
 
 
 	cat <<- EOF > $fichtemp
@@ -2196,8 +2217,8 @@ case $valret in
 	rm -f $fichtemp
 	
 	cat <<- EOF > $fichtemp
-	insert into sauvegarde_ftp ( uname, serveur, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, application )
-	values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'non' , 'centreon' ) ;
+	insert into sauvegarde_ftp ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, application )
+	values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'non' , 'centreon' ) ;
 	EOF
 
 	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
