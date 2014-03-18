@@ -265,6 +265,8 @@ if [ "$VAR15" = "OUI" ] &&
 	fi
 fi
 
+rm -f $fichtemp
+
 }
 
 #############################################################################
@@ -301,7 +303,6 @@ lecture_password=$(sed '$!d' /tmp/lecture-password.txt)
 rm -f /tmp/lecture-password.txt
 rm -f $fichtemp
 
-
 cat <<- EOF > $fichtemp
 select base
 from sauvegarde_bases
@@ -317,7 +318,6 @@ lecture_bases_no2=$(sed -n '2p' /tmp/lecture-bases.txt)
 lecture_bases_no3=$(sed -n '3p' /tmp/lecture-bases.txt)
 rm -f /tmp/lecture-bases.txt
 rm -f $fichtemp
-
 
 cat <<- EOF > $fichtemp
 select nombre_bases
@@ -437,7 +437,6 @@ mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-re
 lecture_retentions=$(sed '$!d' /tmp/lecture-retentions.txt)
 rm -f /tmp/lecture-retentions.txt
 rm -f $fichtemp
-
 
 
 if [ "$lecture_chemin" = "" ] ; then
@@ -621,7 +620,6 @@ else
 fi
 
 
-
 cat <<- EOF > $fichtemp
 select serveur
 from sauvegarde_ftp
@@ -788,7 +786,6 @@ else
 fi
 
 
-
 cat <<- EOF > $fichtemp
 select cron_activer
 from sauvegarde_local
@@ -824,6 +821,7 @@ mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-cr
 lecture_cron_ftp=$(sed '$!d' /tmp/lecture-cron-ftp.txt)
 rm -f /tmp/lecture-cron-ftp.txt
 rm -f $fichtemp
+
 
 if [ "$lecture_cron_local" = "" ] ; then
 	lecture_cron_local=non
