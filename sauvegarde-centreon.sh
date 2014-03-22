@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 17-03-2014
+# Date : 22-03-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -978,7 +978,8 @@ echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF23 --databases > /root/dump
 echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF24 --databases > /root/dump-mysql/$REF24.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "cd /root" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "tar cfvz $TMP/$DATE/centreon-$DATE_HEURE.tgz $PLUGINS/ /usr/local/centreon/www/img/media/ /var/lib/centreon/ /etc/centreon/ dump-mysql/ plateforme/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "ftp -i -n $REF50 <<transfert-ftp" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "ftp -i -n <<transfert-ftp" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "open $REF50 $REF51" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "user $REF53 $REF54" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "mkdir $REF52" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "mkdir $REF52/`uname -n`" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
@@ -988,9 +989,10 @@ echo "cd $REF52/`uname -n`/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIP
 echo "lcd $TMP/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "put centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "cd /" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "cd $REF52/`uname -n`/Centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "mdelete $RETENTION_CENTREON_FTP" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
-echo "rmdir $RETENTION_CENTREON_FTP" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "cd $REF52/`uname -n`/Centreon/$RETENTION_CENTREON_FTP" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "mdelete *.*" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "cd /" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
+echo "rmdir $REF52/`uname -n`/Centreon/$RETENTION_CENTREON_FTP" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "bye" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "quit" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 echo "transfert-ftp" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
@@ -1185,7 +1187,8 @@ if [ "$REF64" -le "$REF65" ] ; then
 
 REF65=`expr $REF65 + 1`
 
-echo "ftp -i -n $REF50 <<purge-ftp" > $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "ftp -i -n<<purge-ftp" > $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
+echo "open $REF50 $REF51" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
 echo "user $REF53 $REF54" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
 echo "mkdir $REF52" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
 echo "mkdir $REF52/`uname -n`" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
@@ -1196,6 +1199,7 @@ while [ "$REF64" != "$REF65" ]
 do
 PURGE='`date +%d-%m-%Y --date '"'$REF64 days ago'"'`'
 REF64=`expr $REF64 + 1`
+echo "cd" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
 echo "mdelete $PURGE" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
 echo "rmdir $PURGE" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_FTP
 done
@@ -1359,6 +1363,31 @@ $DIALOG --ok-label "Quitter" \
 	 --backtitle "Configuration Sauvegarde Centreon" \
 	 --title "Erreur" \
 	 --msgbox  "\Z1$erreur\Zn" 6 52 
+
+rm -f /tmp/erreur
+
+}
+
+#############################################################################
+# Fonction Message d'erreur Serveur CIFS
+#############################################################################
+
+message_erreur_serveur_cifs()
+{
+	
+cat <<- EOF > /tmp/erreur     
+Probleme de connexion avec le serveur de fichier 
+  Veuillez verifier que les parametres saisies
+ sont correcte et que le serveur soit joignable
+EOF
+
+erreur=`cat /tmp/erreur`
+
+$DIALOG --ok-label "Quitter" \
+	 --colors \
+	 --backtitle "Configuration Sauvegarde Centreon" \
+	 --title "Erreur" \
+	 --msgbox  "\Z1$erreur\Zn" 7 52 
 
 rm -f /tmp/erreur
 
@@ -2015,36 +2044,98 @@ case $valret in
 	VARSAISI18=$REF48
 
 
-	cat <<- EOF > $fichtemp
-	delete from sauvegarde_reseau
-	where uname='`uname -n`' and application='centreon' ;
-	EOF
+	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
-
-	rm -f $fichtemp
+	if [ $? -eq 0 ] ; then
 	
-	cat <<- EOF > $fichtemp
-	insert into sauvegarde_reseau ( uname, serveur, partage, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, application )
-	values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'oui' , 'centreon' ) ;
-	EOF
+		if ! grep "/mnt/verification-mount" /etc/mtab &>/dev/null ; then
+			mkdir -p /mnt/verification-mount
+			mount -t $CLIENT_SMB -o username=$VARSAISI12,password=$VARSAISI13 //$VARSAISI10/$VARSAISI11 /mnt/verification-mount &>/dev/null
+		fi
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+		if grep "/mnt/verification-mount" /etc/mtab &>/dev/null ; then
+			
+			cat <<- EOF > $fichtemp
+			delete from sauvegarde_reseau
+			where uname='`uname -n`' and application='centreon' ;
+			EOF
 
-	rm -f $fichtemp
+			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-	cat <<- EOF > $fichtemp
-	alter table sauvegarde_reseau order by application ;
-	alter table sauvegarde_reseau order by uname ;
-	EOF
+			rm -f $fichtemp
+	
+			cat <<- EOF > $fichtemp
+			insert into sauvegarde_reseau ( uname, serveur, partage, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, application )
+			values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'oui' , 'centreon' ) ;
+			EOF
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-	rm -f $fichtemp
+			rm -f $fichtemp
 
-	creation_script_sauvegarde_reseau
-	creation_fichier_cron_sauvegarde
-	creation_execution_script_purge_reseau
+			cat <<- EOF > $fichtemp
+			alter table sauvegarde_reseau order by application ;
+			alter table sauvegarde_reseau order by uname ;
+			EOF
+
+			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+			rm -f $fichtemp
+
+			umount /mnt/verification-mount -l
+			rm -rf /mnt/verification-mount
+
+			creation_script_sauvegarde_reseau
+			creation_fichier_cron_sauvegarde
+			creation_execution_script_purge_reseau
+
+		else
+
+			cat <<- EOF > $fichtemp
+			update sauvegarde_reseau set cron_activer='non' where uname='`uname -n`' and application='centreon' ;
+			EOF
+
+			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+			rm -f $fichtemp
+	
+			cat <<- EOF > $fichtemp
+			alter table sauvegarde_reseau order by application ;
+			alter table sauvegarde_reseau order by uname ;
+			EOF
+
+			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+			rm -f $fichtemp
+
+			creation_fichier_cron_sauvegarde
+    			message_erreur_serveur_cifs
+			menu_configuration_sauvegarde_centreon
+		fi
+
+	else
+
+		cat <<- EOF > $fichtemp
+		update sauvegarde_reseau set cron_activer='non' where uname='`uname -n`' and application='centreon' ;
+		EOF
+
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+		rm -f $fichtemp
+	
+		cat <<- EOF > $fichtemp
+		alter table sauvegarde_reseau order by application ;
+		alter table sauvegarde_reseau order by uname ;
+		EOF
+
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+		rm -f $fichtemp
+
+		creation_fichier_cron_sauvegarde
+		message_erreur_serveur_cifs
+		menu_configuration_sauvegarde_centreon
+	fi
 	;;
 
  3)	# Désactivation Sauvegarde Reseau
@@ -2059,36 +2150,98 @@ case $valret in
 	VARSAISI18=$REF48
 
 
-	cat <<- EOF > $fichtemp
-	delete from sauvegarde_reseau
-	where uname='`uname -n`' and application='centreon' ;
-	EOF
+	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
-
-	rm -f $fichtemp
+	if [ $? -eq 0 ] ; then
 	
-	cat <<- EOF > $fichtemp
-	insert into sauvegarde_reseau ( uname, serveur, partage, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, application )
-	values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'non' , 'centreon' ) ;
-	EOF
+		if ! grep "/mnt/verification-mount" /etc/mtab &>/dev/null ; then
+			mkdir -p /mnt/verification-mount
+			mount -t $CLIENT_SMB -o username=$VARSAISI12,password=$VARSAISI13 //$VARSAISI10/$VARSAISI11 /mnt/verification-mount &>/dev/null
+		fi
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+		if grep "/mnt/verification-mount" /etc/mtab &>/dev/null ; then
 
-	rm -f $fichtemp
+			cat <<- EOF > $fichtemp
+			delete from sauvegarde_reseau
+			where uname='`uname -n`' and application='centreon' ;
+			EOF
 
-	cat <<- EOF > $fichtemp
-	alter table sauvegarde_reseau order by application ;
-	alter table sauvegarde_reseau order by uname ;
-	EOF
+			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+			rm -f $fichtemp
+	
+			cat <<- EOF > $fichtemp
+			insert into sauvegarde_reseau ( uname, serveur, partage, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, application )
+			values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'non' , 'centreon' ) ;
+			EOF
 
-	rm -f $fichtemp
+			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-	creation_script_sauvegarde_reseau
-	creation_fichier_cron_sauvegarde
-	creation_execution_script_purge_reseau
+			rm -f $fichtemp
+
+			cat <<- EOF > $fichtemp
+			alter table sauvegarde_reseau order by application ;
+			alter table sauvegarde_reseau order by uname ;
+			EOF
+
+			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+			rm -f $fichtemp
+
+			umount /mnt/verification-mount -l
+			rm -rf /mnt/verification-mount
+
+			creation_script_sauvegarde_reseau
+			creation_fichier_cron_sauvegarde
+			creation_execution_script_purge_reseau
+
+		else
+
+			cat <<- EOF > $fichtemp
+			update sauvegarde_reseau set cron_activer='non' where uname='`uname -n`' and application='centreon' ;
+			EOF
+
+			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+			rm -f $fichtemp
+	
+			cat <<- EOF > $fichtemp
+			alter table sauvegarde_reseau order by application ;
+			alter table sauvegarde_reseau order by uname ;
+			EOF
+
+			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+			rm -f $fichtemp
+
+			creation_fichier_cron_sauvegarde
+    			message_erreur_serveur_cifs
+			menu_configuration_sauvegarde_centreon
+		fi
+
+	else
+
+		cat <<- EOF > $fichtemp
+		update sauvegarde_reseau set cron_activer='non' where uname='`uname -n`' and application='centreon' ;
+		EOF
+
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+		rm -f $fichtemp
+	
+		cat <<- EOF > $fichtemp
+		alter table sauvegarde_reseau order by application ;
+		alter table sauvegarde_reseau order by uname ;
+		EOF
+
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+		rm -f $fichtemp
+
+		creation_fichier_cron_sauvegarde
+		message_erreur_serveur_cifs
+		menu_configuration_sauvegarde_centreon
+	fi
 	;;
 
  1)	# Exécution Sauvegarde Reseau
