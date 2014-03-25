@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 23-03-2014
+# Date : 25-03-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -848,6 +848,40 @@ if [ "$lecture_cron_ftp" = "" ] ; then
 	lecture_cron_ftp=non
 fi
 
+
+cat <<- EOF > $fichtemp
+select erreur
+from sauvegarde_reseau
+where uname='`uname -n`' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-erreur-reseau.txt
+
+lecture_erreur_reseau=$(sed '$!d' /tmp/lecture-erreur-reseau.txt)
+rm -f /tmp/lecture-erreur-reseau.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select erreur
+from sauvegarde_reseau
+where uname='`uname -n`' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-erreur-ftp.txt
+
+lecture_erreur_ftp=$(sed '$!d' /tmp/lecture-erreur-ftp.txt)
+rm -f /tmp/lecture-erreur-ftp.txt
+rm -f $fichtemp
+
+
+if [ "$lecture_erreur_reseau" = "" ] ; then
+	lecture_erreur_reseau=oui
+fi
+
+if [ "$lecture_erreur_ftp" = "" ] ; then
+	lecture_erreur_ftp=oui
+fi
+
 }
 
 #############################################################################
@@ -1426,9 +1460,9 @@ else
 fi
 
 if [ "$nombre_bases_lister" = "0" ] ; then
-	choix2="\Z1Configuration Bases A Sauvegarder\Zn" 
+	choix2="\Z1Configuration Bases MySQL\Zn" 
 else
-	choix2="\Z2Configuration Bases A Sauvegarder\Zn" 
+	choix2="\Z2Configuration Bases MySQL\Zn" 
 fi
 
 if [ "$lecture_cron_local" = "non" ] ; then
@@ -1616,49 +1650,97 @@ $DIALOG --backtitle "Configuration Sauvegarde Centreon" \
 	 --title "Configuration Sauvegarde Centreon" \
 	 --clear \
 	 --colors \
-	 --default-item "5" \
-	 --menu "Quel est votre choix" 12 58 5 \
+	 --default-item "8" \
+	 --menu "Quel est votre choix" 15 58 8 \
 	 "1" "$choix2" \
 	 "2" "$choix3" \
 	 "3" "$choix4" \
 	 "4" "$choix5" \
-	 "5" "\Z4Retour\Zn" 2> $fichtemp
+	 "5" "Execution Sauvegarde Local" \
+	 "6" "Execution Sauvegarde Reseau" \
+	 "7" "Execution Sauvegarde FTP" \
+	 "8" "\Z4Retour\Zn" 2> $fichtemp
 
 
 valret=$?
 choix=`cat $fichtemp`
 case $valret in
 
- 0)	# Configuration Bases A Sauvegarder
+ 0)	# Configuration Bases MySQL
 	if [ "$choix" = "1" ]
 	then
 		rm -f $fichtemp
 		menu_configuration_bases_centreon
 	fi
 
-	# Configuration Sauvegarde Centreon Local
+	# Configuration Sauvegarde Local
 	if [ "$choix" = "2" ]
 	then
 		rm -f $fichtemp
 		menu_configuration_sauvegarde_centreon_local
 	fi
 
-	# Configuration Sauvegarde Centreon Reseau
+	# Configuration Sauvegarde Reseau
 	if [ "$choix" = "3" ]
 	then
 		rm -f $fichtemp
 		menu_configuration_sauvegarde_centreon_reseau
 	fi
 
-	# Configuration Sauvegarde Centreon FTP 
+	# Configuration Sauvegarde FTP 
 	if [ "$choix" = "4" ]
 	then
 		rm -f $fichtemp
 		menu_configuration_sauvegarde_centreon_ftp
 	fi
 
-	# Retour
+	# Execution Sauvegarde Local 
 	if [ "$choix" = "5" ]
+	then
+		rm -f $fichtemp
+
+		if [ "$nombre_bases_lister" = "0" ] ; then
+			message_erreur
+			menu_configuration_sauvegarde_centreon
+		else
+			creation_script_sauvegarde_local
+			execution_script_sauvegarde_local
+			menu_configuration_sauvegarde_centreon
+		fi
+	fi
+	
+	# Execution Sauvegarde Reseau 
+	if [ "$choix" = "6" ]
+	then
+		rm -f $fichtemp
+
+		if [ "$nombre_bases_lister" = "0" ] || [ "$lecture_erreur_reseau" = "oui" ] ; then
+			message_erreur
+			menu_configuration_sauvegarde_centreon
+		else
+			creation_script_sauvegarde_reseau
+			execution_script_sauvegarde_reseau
+			menu_configuration_sauvegarde_centreon
+		fi
+	fi
+
+	# Execution Sauvegarde FTP 
+	if [ "$choix" = "7" ]
+	then
+		rm -f $fichtemp
+
+		if [ "$nombre_bases_lister" = "0" ] ; then
+			message_erreur
+			menu_configuration_sauvegarde_centreon
+		else
+			creation_script_sauvegarde_ftp
+			execution_script_sauvegarde_ftp
+			menu_configuration_sauvegarde_centreon
+		fi
+	fi
+
+	# Retour
+	if [ "$choix" = "8" ]
 	then
 		clear
 	fi
@@ -1896,7 +1978,6 @@ fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 $DIALOG --ok-label "Activation" \
 	 --extra-button \
 	 --extra-label "Desactivation" \
-	 --cancel-label "Execution" \
 	 --backtitle "Configuration Sauvegarde Centreon" \
 	 --title "Configuration Sauvegarde Local" \
 	 --form "Configuration Sauvegarde Local" 12 62 0 \
@@ -1993,10 +2074,8 @@ case $valret in
 	creation_execution_script_purge_local
 	;;
 
- 1)	# Exécution Sauvegarde Local
-	rm -f $fichtemp
-	creation_script_sauvegarde_local
-	execution_script_sauvegarde_local
+ 1)	# Appuyé sur Touche CTRL C
+	echo "Appuyé sur Touche CTRL C."
 	;;
 
  255)	# Appuyé sur Touche Echap
@@ -2029,7 +2108,6 @@ fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 $DIALOG --ok-label "Activation" \
 	 --extra-button \
 	 --extra-label "Desactivation" \
-	 --cancel-label "Execution" \
 	 --insecure \
 	 --backtitle "Configuration Sauvegarde Centreon" \
 	 --title "Configuration Sauvegarde Reseau" \
@@ -2081,8 +2159,8 @@ case $valret in
 			rm -f $fichtemp
 	
 			cat <<- EOF > $fichtemp
-			insert into sauvegarde_reseau ( uname, serveur, partage, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, application )
-			values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'oui' , 'centreon' ) ;
+			insert into sauvegarde_reseau ( uname, serveur, partage, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+			values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'oui' , 'non' , 'centreon' ) ;
 			EOF
 
 			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
@@ -2108,7 +2186,9 @@ case $valret in
 		else
 
 			cat <<- EOF > $fichtemp
-			update sauvegarde_reseau set cron_activer='non' where uname='`uname -n`' and application='centreon' ;
+			update sauvegarde_reseau 
+			set cron_activer='non', erreur='oui' 
+			where uname='`uname -n`' and application='centreon' ;
 			EOF
 
 			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
@@ -2132,7 +2212,9 @@ case $valret in
 	else
 
 		cat <<- EOF > $fichtemp
-		update sauvegarde_reseau set cron_activer='non' where uname='`uname -n`' and application='centreon' ;
+		update sauvegarde_reseau 
+		set cron_activer='non', erreur='oui' 
+		where uname='`uname -n`' and application='centreon' ;
 		EOF
 
 		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
@@ -2187,8 +2269,8 @@ case $valret in
 			rm -f $fichtemp
 	
 			cat <<- EOF > $fichtemp
-			insert into sauvegarde_reseau ( uname, serveur, partage, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, application )
-			values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'non' , 'centreon' ) ;
+			insert into sauvegarde_reseau ( uname, serveur, partage, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+			values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'non' , 'non' , 'centreon' ) ;
 			EOF
 
 			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
@@ -2214,7 +2296,9 @@ case $valret in
 		else
 
 			cat <<- EOF > $fichtemp
-			update sauvegarde_reseau set cron_activer='non' where uname='`uname -n`' and application='centreon' ;
+			update sauvegarde_reseau 
+			set cron_activer='non', erreur='oui' 
+			where uname='`uname -n`' and application='centreon' ;
 			EOF
 
 			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
@@ -2238,7 +2322,9 @@ case $valret in
 	else
 
 		cat <<- EOF > $fichtemp
-		update sauvegarde_reseau set cron_activer='non' where uname='`uname -n`' and application='centreon' ;
+		update sauvegarde_reseau 
+		set cron_activer='non', erreur='oui' 
+		where uname='`uname -n`' and application='centreon' ;
 		EOF
 
 		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
@@ -2260,10 +2346,8 @@ case $valret in
 	fi
 	;;
 
- 1)	# Exécution Sauvegarde Reseau
-	rm -f $fichtemp
-	creation_script_sauvegarde_reseau
-	execution_script_sauvegarde_reseau
+ 1)	# Appuyé sur Touche CTRL C
+	echo "Appuyé sur Touche CTRL C."
 	;;
 
  255)	# Appuyé sur Touche Echap
@@ -2296,7 +2380,6 @@ fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 $DIALOG --ok-label "Activation" \
 	 --extra-button \
 	 --extra-label "Desactivation" \
-	 --cancel-label "Execution" \
 	 --insecure \
 	 --backtitle "Configuration Sauvegarde Centreon" \
 	 --title "Configuration Sauvegarde FTP" \
@@ -2406,10 +2489,8 @@ case $valret in
 	creation_execution_script_purge_ftp
 	;;
 
- 1)	# Exécution Sauvegarde FTP
-	rm -f $fichtemp
-	creation_script_sauvegarde_ftp
-	execution_script_sauvegarde_ftp
+ 1)	# Appuyé sur Touche CTRL C
+	echo "Appuyé sur Touche CTRL C."
 	;;
 
  255)	# Appuyé sur Touche Echap
