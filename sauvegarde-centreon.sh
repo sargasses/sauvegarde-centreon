@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 25-03-2014
+# Date : 27-03-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -863,7 +863,7 @@ rm -f $fichtemp
 
 cat <<- EOF > $fichtemp
 select erreur
-from sauvegarde_reseau
+from sauvegarde_ftp
 where uname='`uname -n`' and application='centreon' ;
 EOF
 
@@ -1429,6 +1429,31 @@ cat <<- EOF > /tmp/erreur
 Probleme de connexion avec le serveur de fichier 
   Veuillez verifier que les parametres saisies
  sont correcte et que le serveur soit joignable
+EOF
+
+erreur=`cat /tmp/erreur`
+
+$DIALOG --ok-label "Quitter" \
+	 --colors \
+	 --backtitle "Configuration Sauvegarde Centreon" \
+	 --title "Erreur" \
+	 --msgbox  "\Z1$erreur\Zn" 7 52 
+
+rm -f /tmp/erreur
+
+}
+
+#############################################################################
+# Fonction Message d'erreur Serveur FTP
+#############################################################################
+
+message_erreur_serveur_ftp()
+{
+	
+cat <<- EOF > /tmp/erreur     
+  Probleme de connexion avec le serveur ftp
+ Veuillez verifier que les parametres saisies
+sont correcte et que le serveur soit joignable
 EOF
 
 erreur=`cat /tmp/erreur`
@@ -2413,35 +2438,78 @@ case $valret in
 
 
 	cat <<- EOF > $fichtemp
-	delete from sauvegarde_ftp
-	where uname='`uname -n`' and application='centreon' ;
+	open $VARSAISI10 $VARSAISI11
+	user $VARSAISI13 $VARSAISI14
+	bye
+	quit
 	EOF
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+	ftp -i -n < $fichtemp > verification-connexion-ftp.txt 2>&1
 
+	verification_connexion_ftp=`cat verification-connexion-ftp.txt`
+
+	rm -f verification-connexion-ftp.txt
 	rm -f $fichtemp
+
+
+	if [ -z "$verification_connexion_ftp" ] ; then
+
+		cat <<- EOF > $fichtemp
+		delete from sauvegarde_ftp
+		where uname='`uname -n`' and application='centreon' ;
+		EOF
+
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+		rm -f $fichtemp
 	
-	cat <<- EOF > $fichtemp
-	insert into sauvegarde_ftp ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, application )
-	values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'oui' , 'centreon' ) ;
-	EOF
+		cat <<- EOF > $fichtemp
+		insert into sauvegarde_ftp ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+		values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'oui' , 'non' , 'centreon' ) ;
+		EOF
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-	rm -f $fichtemp
+		rm -f $fichtemp
 
-	cat <<- EOF > $fichtemp
-	alter table sauvegarde_ftp order by application ;
-	alter table sauvegarde_ftp order by uname ;
-	EOF
+		cat <<- EOF > $fichtemp
+		alter table sauvegarde_ftp order by application ;
+		alter table sauvegarde_ftp order by uname ;
+		EOF
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-	rm -f $fichtemp
+		rm -f $fichtemp
 
-	creation_script_sauvegarde_ftp
-	creation_fichier_cron_sauvegarde
-	creation_execution_script_purge_ftp 
+		creation_script_sauvegarde_ftp
+		creation_fichier_cron_sauvegarde
+		creation_execution_script_purge_ftp 
+
+	else
+		
+		cat <<- EOF > $fichtemp
+		update sauvegarde_ftp 
+		set cron_activer='non', erreur='oui' 
+		where uname='`uname -n`' and application='centreon' ;
+		EOF
+
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+		rm -f $fichtemp
+	
+		cat <<- EOF > $fichtemp
+		alter table sauvegarde_ftp order by application ;
+		alter table sauvegarde_ftp order by uname ;
+		EOF
+
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+		rm -f $fichtemp
+
+		creation_fichier_cron_sauvegarde
+		message_erreur_serveur_ftp
+		menu_configuration_sauvegarde_centreon
+	fi
 	;;
 
  3)	# Désactivation Sauvegarde FTP
@@ -2458,35 +2526,78 @@ case $valret in
 
 
 	cat <<- EOF > $fichtemp
-	delete from sauvegarde_ftp
-	where uname='`uname -n`' and application='centreon' ;
+	open $VARSAISI10 $VARSAISI11
+	user $VARSAISI13 $VARSAISI14
+	bye
+	quit
 	EOF
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+	ftp -i -n < $fichtemp > verification-connexion-ftp.txt 2>&1
 
+	verification_connexion_ftp=`cat verification-connexion-ftp.txt`
+
+	rm -f verification-connexion-ftp.txt
 	rm -f $fichtemp
+
+
+	if [ -z "$verification_connexion_ftp" ] ; then
+
+		cat <<- EOF > $fichtemp
+		delete from sauvegarde_ftp
+		where uname='`uname -n`' and application='centreon' ;
+		EOF
+
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+		rm -f $fichtemp
 	
-	cat <<- EOF > $fichtemp
-	insert into sauvegarde_ftp ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, application )
-	values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'non' , 'centreon' ) ;
-	EOF
+		cat <<- EOF > $fichtemp
+		insert into sauvegarde_ftp ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+		values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'non' , 'non' , 'centreon' ) ;
+		EOF
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-	rm -f $fichtemp
+		rm -f $fichtemp
 
-	cat <<- EOF > $fichtemp
-	alter table sauvegarde_ftp order by application ;
-	alter table sauvegarde_ftp order by uname ;
-	EOF
+		cat <<- EOF > $fichtemp
+		alter table sauvegarde_ftp order by application ;
+		alter table sauvegarde_ftp order by uname ;
+		EOF
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-	rm -f $fichtemp
+		rm -f $fichtemp
 
-	creation_script_sauvegarde_ftp
-	creation_fichier_cron_sauvegarde
-	creation_execution_script_purge_ftp
+		creation_script_sauvegarde_ftp
+		creation_fichier_cron_sauvegarde
+		creation_execution_script_purge_ftp
+
+	else
+		
+		cat <<- EOF > $fichtemp
+		update sauvegarde_ftp 
+		set cron_activer='non', erreur='oui' 
+		where uname='`uname -n`' and application='centreon' ;
+		EOF
+
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+		rm -f $fichtemp
+	
+		cat <<- EOF > $fichtemp
+		alter table sauvegarde_ftp order by application ;
+		alter table sauvegarde_ftp order by uname ;
+		EOF
+
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+		rm -f $fichtemp
+
+		creation_fichier_cron_sauvegarde
+		message_erreur_serveur_ftp
+		menu_configuration_sauvegarde_centreon
+	fi
 	;;
 
  1)	# Appuyé sur Touche CTRL C
