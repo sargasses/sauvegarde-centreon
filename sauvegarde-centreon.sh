@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 27-03-2014
+# Date : 28-03-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -1564,9 +1564,7 @@ case $valret in
 	then
 		clear
 	fi
-
 	;;
-
 
  1)	# Appuyé sur Touche CTRL C
 	echo "Appuyé sur Touche CTRL C."
@@ -1770,7 +1768,6 @@ case $valret in
 		clear
 	fi
 	;;
-
 
  1)	# Appuyé sur Touche CTRL C
 	echo "Appuyé sur Touche CTRL C."
