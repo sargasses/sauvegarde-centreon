@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 28-03-2014
+# Date : 29-03-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -851,6 +851,18 @@ fi
 
 cat <<- EOF > $fichtemp
 select erreur
+from sauvegarde_local
+where uname='`uname -n`' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-erreur-local.txt
+
+lecture_erreur_local=$(sed '$!d' /tmp/lecture-erreur-local.txt)
+rm -f /tmp/lecture-erreur-local.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select erreur
 from sauvegarde_reseau
 where uname='`uname -n`' and application='centreon' ;
 EOF
@@ -873,6 +885,10 @@ lecture_erreur_ftp=$(sed '$!d' /tmp/lecture-erreur-ftp.txt)
 rm -f /tmp/lecture-erreur-ftp.txt
 rm -f $fichtemp
 
+
+if [ "$lecture_erreur_local" = "" ] ; then
+	lecture_erreur_local=oui
+fi
 
 if [ "$lecture_erreur_reseau" = "" ] ; then
 	lecture_erreur_reseau=oui
@@ -1490,20 +1506,32 @@ else
 	choix2="\Z2Configuration Bases MySQL\Zn" 
 fi
 
-if [ "$lecture_cron_local" = "non" ] ; then
+if [ "$lecture_erreur_local" = "oui" ] ; then
 	choix3="\Z1Configuration Sauvegarde Local\Zn" 
+
+elif [ "$lecture_cron_local" = "non" ] ; then
+	choix3="\Zb\Z3Configuration Sauvegarde Local\Zn" 
+
 else
 	choix3="\Z2Configuration Sauvegarde Local\Zn" 
 fi
 
-if [ "$lecture_cron_reseau" = "non" ] ; then
+if [ "$lecture_erreur_reseau" = "oui" ] ; then
 	choix4="\Z1Configuration Sauvegarde Reseau\Zn" 
+
+elif [ "$lecture_cron_reseau" = "non" ] ; then
+	choix4="\Zb\Z3Configuration Sauvegarde Reseau\Zn" 
+
 else
 	choix4="\Z2Configuration Sauvegarde Reseau\Zn" 
 fi
 
-if [ "$lecture_cron_ftp" = "non" ] ; then
+if [ "$lecture_erreur_ftp" = "oui" ] ; then
 	choix5="\Z1Configuration Sauvegarde FTP\Zn" 
+
+elif [ "$lecture_cron_ftp" = "non" ] ; then
+	choix5="\Zb\Z3Configuration Sauvegarde FTP\Zn" 
+
 else
 	choix5="\Z2Configuration Sauvegarde FTP\Zn" 
 fi
@@ -1722,7 +1750,7 @@ case $valret in
 	then
 		rm -f $fichtemp
 
-		if [ "$nombre_bases_lister" = "0" ] ; then
+		if [ "$lecture_erreur_local" = "oui" ] ; then
 			message_erreur
 			menu_configuration_sauvegarde_centreon
 		else
@@ -1737,7 +1765,7 @@ case $valret in
 	then
 		rm -f $fichtemp
 
-		if [ "$nombre_bases_lister" = "0" ] || [ "$lecture_erreur_reseau" = "oui" ] ; then
+		if [ "$lecture_erreur_reseau" = "oui" ] ; then
 			message_erreur
 			menu_configuration_sauvegarde_centreon
 		else
@@ -1752,7 +1780,7 @@ case $valret in
 	then
 		rm -f $fichtemp
 
-		if [ "$nombre_bases_lister" = "0" ] ; then
+		if [ "$lecture_erreur_ftp" = "oui" ] ; then
 			message_erreur
 			menu_configuration_sauvegarde_centreon
 		else
@@ -1818,36 +1846,6 @@ case $valret in
 
 
 	cat <<- EOF > $fichtemp
-	update sauvegarde_local
-	set cron_activer= 'non' 
-	where uname='`uname -n`' and application='centreon' ;
-	EOF
-
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
-
-	rm -f $fichtemp
-
-	cat <<- EOF > $fichtemp
-	update sauvegarde_reseau
-	set cron_activer= 'non' 
-	where uname='`uname -n`' and application='centreon' ;
-	EOF
-
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
-
-	rm -f $fichtemp
-
-	cat <<- EOF > $fichtemp
-	update sauvegarde_ftp
-	set cron_activer= 'non' 
-	where uname='`uname -n`' and application='centreon' ;
-	EOF
-
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
-
-	rm -f $fichtemp
-
-	cat <<- EOF > $fichtemp
 	select distinct schema_name from information_schema.SCHEMATA;
 	EOF
 
@@ -1869,6 +1867,36 @@ case $valret in
 	cat <<- EOF > $fichtemp
 	insert into information ( uname, nombre_bases, application )
 	values ( '`uname -n`' , '0' , 'centreon' ) ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	update sauvegarde_local 
+	set cron_activer='non', erreur='oui' 
+	where uname='`uname -n`' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	update sauvegarde_reseau 
+	set cron_activer='non', erreur='oui' 
+	where uname='`uname -n`' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	update sauvegarde_ftp 
+	set cron_activer='non', erreur='oui' 
+	where uname='`uname -n`' and application='centreon' ;
 	EOF
 
 	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
@@ -2033,8 +2061,8 @@ case $valret in
 	rm -f $fichtemp
 	
 	cat <<- EOF > $fichtemp
-	insert into sauvegarde_local ( uname, chemin, heures, minutes, jours, retentions, purges, cron_activer, application )
-	values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , 'oui' , 'centreon' ) ;
+	insert into sauvegarde_local ( uname, chemin, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+	values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , 'oui' , 'non' , 'centreon' ) ;
 	EOF
 
 	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
@@ -2074,8 +2102,8 @@ case $valret in
 	rm -f $fichtemp
 	
 	cat <<- EOF > $fichtemp
-	insert into sauvegarde_local ( uname, chemin, heures, minutes, jours, retentions, purges, cron_activer, application )
-	values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , 'non' , 'centreon' ) ;
+	insert into sauvegarde_local ( uname, chemin, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+	values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , 'non' , 'non' , 'centreon' ) ;
 	EOF
 
 	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
