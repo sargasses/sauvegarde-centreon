@@ -185,7 +185,7 @@ else
 fi
 
 if [ "$VAR14" = "" ] ; then
-	REF14=directory
+	REF14=password
 else
 	REF14=$VAR14
 fi
@@ -368,7 +368,7 @@ else
 fi
 
 if [ "$lecture_password" = "" ] ; then
-	REF21=directory
+	REF21=password
 else
 	REF21=$lecture_password
 fi
