@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 29-03-2014
+# Date : 03-04-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -478,7 +478,7 @@ fi
 
 if [ "$lecture_retentions" = "" ] ; then
 	REF34=31
-	REF35=0
+	REF35=00
 else
 	REF34=$lecture_retentions
 	REF35=$lecture_retentions
@@ -626,7 +626,7 @@ fi
 
 if [ "$lecture_retentions" = "" ] ; then
 	REF47=31
-	REF48=0
+	REF48=00
 else
 	REF47=$lecture_retentions
 	REF48=$lecture_retentions
@@ -792,7 +792,7 @@ fi
 
 if [ "$lecture_retentions" = "" ] ; then
 	REF58=31
-	REF59=0
+	REF59=00
 else
 	REF58=$lecture_retentions
 	REF59=$lecture_retentions
@@ -1702,7 +1702,7 @@ $DIALOG --backtitle "Configuration Sauvegarde Centreon" \
 	 --clear \
 	 --colors \
 	 --default-item "8" \
-	 --menu "Quel est votre choix" 15 58 8 \
+	 --menu "Quel est votre choix" 15 56 8 \
 	 "1" "$choix2" \
 	 "2" "$choix3" \
 	 "3" "$choix4" \
@@ -1846,34 +1846,6 @@ case $valret in
 
 
 	cat <<- EOF > $fichtemp
-	select distinct schema_name from information_schema.SCHEMATA;
-	EOF
-
-	mysql -h `uname -n` -u $VARSAISI10 -p$VARSAISI11 < $fichtemp >/tmp/resultat.txt 2>&1
-
-	if ! grep -w "^$VARSAISI12" /tmp/resultat.txt > /dev/null ||
-	   ! grep -w "^$VARSAISI13" /tmp/resultat.txt > /dev/null ||
-	   ! grep -w "^$VARSAISI14" /tmp/resultat.txt > /dev/null ; then
-
-	cat <<- EOF > $fichtemp
-	delete from information
-	where uname='`uname -n`' and application='centreon' ;
-	EOF
-
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
-
-	rm -f $fichtemp
-
-	cat <<- EOF > $fichtemp
-	insert into information ( uname, nombre_bases, application )
-	values ( '`uname -n`' , '0' , 'centreon' ) ;
-	EOF
-
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
-
-	rm -f $fichtemp
-
-	cat <<- EOF > $fichtemp
 	update sauvegarde_local 
 	set cron_activer='non', erreur='oui' 
 	where uname='`uname -n`' and application='centreon' ;
@@ -1897,6 +1869,34 @@ case $valret in
 	update sauvegarde_ftp 
 	set cron_activer='non', erreur='oui' 
 	where uname='`uname -n`' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	select distinct schema_name from information_schema.SCHEMATA;
+	EOF
+
+	mysql -h `uname -n` -u $VARSAISI10 -p$VARSAISI11 < $fichtemp >/tmp/resultat.txt 2>&1
+
+	if ! grep -w "^$VARSAISI12" /tmp/resultat.txt > /dev/null ||
+	   ! grep -w "^$VARSAISI13" /tmp/resultat.txt > /dev/null ||
+	   ! grep -w "^$VARSAISI14" /tmp/resultat.txt > /dev/null ; then
+
+	cat <<- EOF > $fichtemp
+	delete from information
+	where uname='`uname -n`' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	insert into information ( uname, nombre_bases, application )
+	values ( '`uname -n`' , '0' , 'centreon' ) ;
 	EOF
 
 	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
