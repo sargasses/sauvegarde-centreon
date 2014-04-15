@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 14-04-2014
+# Date : 15-04-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -1861,6 +1861,7 @@ cat <<- EOF > $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
 
 ###### Sauvegarde Centreon SFTP ######
 
+
 ################### Fichier Cron Sauvegarde Centreon ###################
 EOF
 
@@ -1896,22 +1897,22 @@ if [ "$lecture_cron_ftp" = "non" ] ; then
 fi
 
 if [ "$lecture_cron_ftps" = "oui" ] ; then
-	ligne=$(sed -n '/###### Sauvegarde MySQL FTPS ######/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
+	ligne=$(sed -n '/###### Sauvegarde Centreon FTPS ######/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
 	sed -i "`expr $ligne + 2`"i"$REF66 $REF65 * * $REF67 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTPS" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
 fi
 
 if [ "$lecture_cron_ftps" = "non" ] ; then
-	ligne=$(sed -n '/###### Sauvegarde MySQL FTPS ######/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
+	ligne=$(sed -n '/###### Sauvegarde Centreon FTPS ######/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
 	sed -i "`expr $ligne + 2`"i"#$REF66 $REF65 * * $REF67 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTPS" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
 fi
 
 if [ "$lecture_cron_sftp" = "oui" ] ; then
-	ligne=$(sed -n '/###### Sauvegarde MySQL SFTP ######/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
+	ligne=$(sed -n '/###### Sauvegarde Centreon SFTP ######/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
 	sed -i "`expr $ligne + 2`"i"$REF75 $REF74 * * $REF76 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
 fi
 
 if [ "$lecture_cron_sftp" = "non" ] ; then
-	ligne=$(sed -n '/###### Sauvegarde MySQL SFTP ######/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
+	ligne=$(sed -n '/###### Sauvegarde Centreon SFTP ######/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
 	sed -i "`expr $ligne + 2`"i"#$REF75 $REF74 * * $REF76 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
 fi
 
