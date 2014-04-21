@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 17-04-2014
+# Date : 21-04-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -1354,7 +1354,7 @@ RETENTION_CENTREON_LOCAL='`date +%d-%m-%Y --date '"'$REF34 days ago'"'`'
 RETENTION_CENTREON_RESEAU='`date +%d-%m-%Y --date '"'$REF47 days ago'"'`'
 RETENTION_CENTREON_FTP='`date +%d-%m-%Y --date '"'$REF58 days ago'"'`'
 RETENTION_CENTREON_FTPS='`date +%d-%m-%Y --date '"'$REF68 days ago'"'`'
-RETENTION_CENTREON_SFTP='`date +%d-%m-%Y --date '"'$REF77 days ago'"'`'
+RETENTION_CENTREON_SFTP='`date +%d.%m.%y --date '"'$REF77 days ago'"'`'
 
 }
 
@@ -1371,17 +1371,20 @@ lecture_version_centreon
 lecture_nombre_aleatoire
 
 
-echo "mkdir -p $REF30/Centreon/$DATE" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
-echo "rm -f $REF30/Centreon/$DATE/centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "rm -rf $TMP/$NOMBRE_ALEATOIRE/" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "mkdir -p $REF30/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "mkdir -p $TMP/$NOMBRE_ALEATOIRE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "mkdir -p $TMP/$NOMBRE_ALEATOIRE/plateforme" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "echo "$VERSION_CENTREON" > $TMP/$NOMBRE_ALEATOIRE/plateforme/centreon.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "echo "$PLATEFORME_LOCAL" > $TMP/$NOMBRE_ALEATOIRE/plateforme/plateforme.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "rm -f $REF30/Centreon/$DATE/centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "mkdir -p $TMP/$NOMBRE_ALEATOIRE/dump-mysql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF22 --databases > $TMP/$NOMBRE_ALEATOIRE/dump-mysql/$REF22.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF23 --databases > $TMP/$NOMBRE_ALEATOIRE/dump-mysql/$REF23.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF24 --databases > $TMP/$NOMBRE_ALEATOIRE/dump-mysql/$REF24.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "cd $TMP/$NOMBRE_ALEATOIRE/" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
-echo "tar cfvz $REF30/Centreon/$DATE/Centreon-$DATE_HEURE.tgz $PLUGINS/ /usr/local/centreon/www/img/media/ /var/lib/centreon/ /etc/centreon/ dump-mysql/ plateforme/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "tar cfvz $TMP/$NOMBRE_ALEATOIRE/Centreon-$DATE_HEURE.tgz $PLUGINS/ /usr/local/centreon/www/img/media/ /var/lib/centreon/ /etc/centreon/ dump-mysql/ plateforme/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
+echo "cp Centreon-$DATE_HEURE.tgz $REF30/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "rm -rf $REF30/Centreon/$RETENTION_CENTREON_LOCAL" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 echo "rm -rf $TMP/$NOMBRE_ALEATOIRE/" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 
@@ -1403,13 +1406,13 @@ lecture_version_centreon
 lecture_nombre_aleatoire
 
 
-echo "mkdir -p /mnt/sauvegarde-centreon" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "rm -rf $TMP/$NOMBRE_ALEATOIRE/" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "mkdir -p /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "if ! grep "/mnt/sauvegarde-centreon" /etc/mtab &>/dev/null ; then" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "	mount -t $CLIENT_SMB -o username=$REF42,password=$REF43 //$REF40/$REF41 /mnt/sauvegarde-centreon" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "fi" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "mkdir -p /mnt/sauvegarde-centreon/`uname -n`/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "rm -f /mnt/sauvegarde-centreon/`uname -n`/Centreon/$DATE/centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "rm -rf $TMP/$NOMBRE_ALEATOIRE/" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "mkdir -p $TMP/$NOMBRE_ALEATOIRE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "mkdir -p $TMP/$NOMBRE_ALEATOIRE/plateforme" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "echo "$VERSION_CENTREON" > $TMP/$NOMBRE_ALEATOIRE/plateforme/centreon.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
@@ -1419,7 +1422,8 @@ echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF22 --databases > $TMP/$NOMB
 echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF23 --databases > $TMP/$NOMBRE_ALEATOIRE/dump-mysql/$REF23.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF24 --databases > $TMP/$NOMBRE_ALEATOIRE/dump-mysql/$REF24.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "cd $TMP/$NOMBRE_ALEATOIRE/" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
-echo "tar cfvz /mnt/sauvegarde-centreon/`uname -n`/Centreon/$DATE/Centreon-$DATE_HEURE.tgz $PLUGINS/ /usr/local/centreon/www/img/media/ /var/lib/centreon/ /etc/centreon/ dump-mysql/ plateforme/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "tar cfvz $TMP/$NOMBRE_ALEATOIRE/Centreon-$DATE_HEURE.tgz $PLUGINS/ /usr/local/centreon/www/img/media/ /var/lib/centreon/ /etc/centreon/ dump-mysql/ plateforme/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
+echo "cp Centreon-$DATE_HEURE.tgz /mnt/sauvegarde-centreon/`uname -n`/Centreon/$DATE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "rm -rf /mnt/sauvegarde-centreon/`uname -n`/Centreon/$RETENTION_CENTREON_RESEAU" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "if grep "/mnt/sauvegarde-centreon" /etc/mtab &>/dev/null ; then" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 echo "	grep /mnt/sauvegarde-centreon /etc/mtab > /tmp/nombres-mount.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
@@ -1537,6 +1541,46 @@ echo "rm -rf $TMP/$NOMBRE_ALEATOIRE/" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CE
 
 
 chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTPS
+
+}
+
+#############################################################################
+# Fonction Creation Script Sauvegarde SFTP
+#############################################################################
+
+creation_script_sauvegarde_sftp()
+{
+
+lecture_valeurs_base_donnees
+lecture_valeurs_retentions
+lecture_version_centreon
+lecture_nombre_aleatoire
+
+
+echo "rm -rf $TMP/$NOMBRE_ALEATOIRE/" > $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "mkdir -p $TMP/$NOMBRE_ALEATOIRE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "mkdir -p $TMP/$NOMBRE_ALEATOIRE/plateforme" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "echo "$VERSION_CENTREON" > $TMP/$NOMBRE_ALEATOIRE/plateforme/centreon.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "echo "$PLATEFORME_LOCAL" > $TMP/$NOMBRE_ALEATOIRE/plateforme/plateforme.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "mkdir -p $TMP/$NOMBRE_ALEATOIRE/dump-mysql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF22 --databases > $TMP/$NOMBRE_ALEATOIRE/dump-mysql/$REF22.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF23 --databases > $TMP/$NOMBRE_ALEATOIRE/dump-mysql/$REF23.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF24 --databases > $TMP/$NOMBRE_ALEATOIRE/dump-mysql/$REF24.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "cd $TMP/$NOMBRE_ALEATOIRE/" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "tar cfvz $TMP/$NOMBRE_ALEATOIRE/Centreon-$DATE_HEURE.tgz $PLUGINS/ /usr/local/centreon/www/img/media/ /var/lib/centreon/ /etc/centreon/ dump-mysql/ plateforme/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "touch Centreon-`uname -n`-$RETENTION_CENTREON_FTPS.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "sshpass -p $REF73 sftp -o StrictHostKeyChecking=no -o LogLevel=quiet -P $REF71 $REF72@$REF70<<transfert-sftp" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "lcd $TMP/$NOMBRE_ALEATOIRE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "put Centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "put Centreon-`uname -n`-$RETENTION_CENTREON_FTPS.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "rm Centreon-`uname -n`-$RETENTION_CENTREON_FTPS*.*" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "bye" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "quit" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "transfert-sftp" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "rm -rf $TMP/$NOMBRE_ALEATOIRE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+
+
+chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
 
 }
 
@@ -1829,6 +1873,92 @@ fi
 fi
 
 }
+
+#############################################################################
+# Fonction Creation Exécution Script Purge Centreon SFTP
+#############################################################################
+
+creation_execution_script_purge_sftp()
+{
+
+
+cat <<- EOF > $fichtemp
+select retentions
+from sauvegarde_sftp
+where uname='`uname -n`' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-retentions.txt
+
+lecture_retentions=$(sed '$!d' /tmp/lecture-retentions.txt)
+rm -f /tmp/lecture-retentions.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select purges
+from sauvegarde_sftp
+where uname='`uname -n`' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-purges.txt
+
+lecture_purges=$(sed '$!d' /tmp/lecture-purges.txt)
+rm -f /tmp/lecture-purges.txt
+rm -f $fichtemp
+
+
+REF86=$lecture_retentions
+REF87=$lecture_purges
+
+
+if [ "$REF87" != "0" ] ; then
+if [ "$REF86" -le "$REF87" ] ; then
+
+REF87=`expr $REF87 + 1`
+
+echo "rm -rf $TMP/$NOMBRE_ALEATOIRE" > $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
+echo "mkdir -p $TMP/$NOMBRE_ALEATOIRE" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
+echo "cd $TMP/$NOMBRE_ALEATOIRE" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
+
+while [ "$REF86" != "$REF87" ] 
+do
+PURGE='`date +%d.%m.%y --date '"'$REF86 days ago'"'`'
+REF86=`expr $REF86 + 1`
+echo "touch Centreon-`uname -n`-$PURGE.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
+done
+
+echo "sshpass -p $REF73 sftp -o StrictHostKeyChecking=no -o LogLevel=quiet -P $REF71 $REF72@$REF70<<purge-sftp" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
+echo "lcd $TMP/$NOMBRE_ALEATOIRE" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
+
+
+REF86=$lecture_retentions
+REF87=$lecture_purges
+
+REF87=`expr $REF87 + 1`
+
+while [ "$REF86" != "$REF87" ] 
+do
+PURGE='`date +%d.%m.%y --date '"'$REF86 days ago'"'`'
+REF86=`expr $REF86 + 1`
+echo "put Centreon-`uname -n`-$PURGE.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
+echo "rm Centreon-`uname -n`-$PURGE*.*" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
+done
+
+echo "bye" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
+echo "quit" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
+echo "purge-sftp" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
+echo "rm -rf $TMP/$NOMBRE_ALEATOIRE" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
+
+chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
+
+$REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP &> /dev/null
+rm -f $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
+
+fi
+fi
+
+}
+
 
 #############################################################################
 # Fonction Creation Cron Sauvegarde Centreon
