@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 21-04-2014
+# Date : 23-04-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -323,10 +323,10 @@ rm -f $fichtemp
 }
 
 #############################################################################
-# Fonction Lecture Des Valeurs Dans La Base de Donnée
+# Fonction Lecture Information Base de Donnée Centreon
 #############################################################################
 
-lecture_valeurs_base_donnees()
+lecture_information_base_donnees_centreon()
 {
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
@@ -431,6 +431,18 @@ else
 	REF24=$lecture_bases_no3
 fi
 
+}
+
+#############################################################################
+# Fonction Lecture Information Sauvegarde Local
+#############################################################################
+
+lecture_information_sauvegarde_local()
+{
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
+
 cat <<- EOF > $fichtemp
 select chemin
 from sauvegarde_local
@@ -523,6 +535,17 @@ else
 	REF34=$lecture_retentions
 	REF35=$lecture_retentions
 fi
+
+}
+
+#############################################################################
+# Fonction Lecture Information Sauvegarde Reseau
+#############################################################################
+
+lecture_information_sauvegarde_reseau()
+{
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
 
 cat <<- EOF > $fichtemp
@@ -671,6 +694,17 @@ else
 	REF47=$lecture_retentions
 	REF48=$lecture_retentions
 fi
+
+}
+
+#############################################################################
+# Fonction Lecture Information Sauvegarde FTP
+#############################################################################
+
+lecture_information_sauvegarde_ftp()
+{
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
 
 cat <<- EOF > $fichtemp
@@ -838,6 +872,17 @@ else
 	REF59=$lecture_retentions
 fi
 
+}
+
+#############################################################################
+# Fonction Lecture Information Sauvegarde FTPS
+#############################################################################
+
+lecture_information_sauvegarde_ftps()
+{
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
 
 cat <<- EOF > $fichtemp
 select serveur
@@ -1004,6 +1049,17 @@ else
 	REF69=$lecture_retentions
 fi
 
+}
+
+#############################################################################
+# Fonction Lecture Information Sauvegarde SFTP
+#############################################################################
+
+lecture_information_sauvegarde_sftp()
+{
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
 
 cat <<- EOF > $fichtemp
 select serveur
@@ -1152,6 +1208,17 @@ else
 	REF78=$lecture_retentions
 fi
 
+}
+
+#############################################################################
+# Fonction Lecture Information Cron
+#############################################################################
+
+lecture_information_cron()
+{
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
 
 cat <<- EOF > $fichtemp
 select cron_activer
@@ -1233,6 +1300,17 @@ fi
 if [ "$lecture_cron_sftp" = "" ] ; then
 	lecture_cron_sftp=non
 fi
+
+}
+
+#############################################################################
+# Fonction Lecture Information Erreur
+#############################################################################
+
+lecture_information_erreur()
+{
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
 
 cat <<- EOF > $fichtemp
@@ -1359,13 +1437,14 @@ RETENTION_CENTREON_SFTP='`date +%d.%m.%y --date '"'$REF77 days ago'"'`'
 }
 
 #############################################################################
-# Fonction Creation Script Sauvegarde Local
+# Fonction Creation Script Sauvegarde Centreon Local
 #############################################################################
 
 creation_script_sauvegarde_local()
 {
 
-lecture_valeurs_base_donnees
+lecture_information_base_donnees_centreon
+lecture_information_sauvegarde_local
 lecture_valeurs_retentions
 lecture_version_centreon
 lecture_nombre_aleatoire
@@ -1394,13 +1473,14 @@ chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_LOCAL
 }
 
 #############################################################################
-# Fonction Creation Script Sauvegarde Reseau
+# Fonction Creation Script Sauvegarde Centreon Reseau
 #############################################################################
 
 creation_script_sauvegarde_reseau()
 {
 
-lecture_valeurs_base_donnees
+lecture_information_base_donnees_centreon
+lecture_information_sauvegarde_reseau
 lecture_valeurs_retentions
 lecture_version_centreon
 lecture_nombre_aleatoire
@@ -1445,13 +1525,14 @@ chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_RESEAU
 }
 
 #############################################################################
-# Fonction Creation Script Sauvegarde FTP
+# Fonction Creation Script Sauvegarde Centreon FTP
 #############################################################################
 
 creation_script_sauvegarde_ftp()
 {
 
-lecture_valeurs_base_donnees
+lecture_information_base_donnees_centreon
+lecture_information_sauvegarde_ftp
 lecture_valeurs_retentions
 lecture_version_centreon
 lecture_nombre_aleatoire
@@ -1495,13 +1576,14 @@ chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 }
 
 #############################################################################
-# Fonction Creation Script Sauvegarde FTPS
+# Fonction Creation Script Sauvegarde Centreon FTPS
 #############################################################################
 
 creation_script_sauvegarde_ftps()
 {
 
-lecture_valeurs_base_donnees
+lecture_information_base_donnees_centreon
+lecture_information_sauvegarde_ftps
 lecture_valeurs_retentions
 lecture_version_centreon
 lecture_nombre_aleatoire
@@ -1545,13 +1627,14 @@ chmod 0755 $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTPS
 }
 
 #############################################################################
-# Fonction Creation Script Sauvegarde SFTP
+# Fonction Creation Script Sauvegarde Centreon SFTP
 #############################################################################
 
 creation_script_sauvegarde_sftp()
 {
 
-lecture_valeurs_base_donnees
+lecture_information_base_donnees_centreon
+lecture_information_sauvegarde_sftp
 lecture_valeurs_retentions
 lecture_version_centreon
 lecture_nombre_aleatoire
@@ -1567,11 +1650,11 @@ echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF22 --databases > $TMP/$NOMB
 echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF23 --databases > $TMP/$NOMBRE_ALEATOIRE/dump-mysql/$REF23.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
 echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF24 --databases > $TMP/$NOMBRE_ALEATOIRE/dump-mysql/$REF24.sql" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
 echo "cd $TMP/$NOMBRE_ALEATOIRE/" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
-echo "tar cfvz $TMP/$NOMBRE_ALEATOIRE/Centreon-$DATE_HEURE.tgz $PLUGINS/ /usr/local/centreon/www/img/media/ /var/lib/centreon/ /etc/centreon/ dump-mysql/ plateforme/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "tar cfvz $TMP/$NOMBRE_ALEATOIRE/Centreon-`uname -n`-$DATE_HEURE.tgz $PLUGINS/ /usr/local/centreon/www/img/media/ /var/lib/centreon/ /etc/centreon/ dump-mysql/ plateforme/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
 echo "touch Centreon-`uname -n`-$RETENTION_CENTREON_FTPS.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
 echo "sshpass -p $REF73 sftp -o StrictHostKeyChecking=no -o LogLevel=quiet -P $REF71 $REF72@$REF70<<transfert-sftp" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
 echo "lcd $TMP/$NOMBRE_ALEATOIRE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
-echo "put Centreon-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "put Centreon-`uname -n`-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
 echo "put Centreon-`uname -n`-$RETENTION_CENTREON_FTPS.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
 echo "rm Centreon-`uname -n`-$RETENTION_CENTREON_FTPS*.*" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
 echo "bye" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
@@ -1959,7 +2042,6 @@ fi
 
 }
 
-
 #############################################################################
 # Fonction Creation Cron Sauvegarde Centreon
 #############################################################################
@@ -1967,7 +2049,11 @@ fi
 creation_fichier_cron_sauvegarde()
 {
 
-lecture_valeurs_base_donnees
+lecture_information_sauvegarde_local
+lecture_information_sauvegarde_reseau
+lecture_information_sauvegarde_ftp
+lecture_information_sauvegarde_ftps
+lecture_information_sauvegarde_sftp
 
 
 cat <<- EOF > $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
@@ -2138,7 +2224,7 @@ rm -f $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTP
 # Fonction Suppression Script Sauvegarde FTPS
 #############################################################################
 
-suppression_script_sauvegarde_sftp()
+suppression_script_sauvegarde_ftps()
 {
 
 rm -f $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_FTPS
@@ -2507,7 +2593,9 @@ menu
 menu_configuration_sauvegarde_centreon()
 {
 
-lecture_valeurs_base_donnees
+lecture_information_base_donnees_centreon
+lecture_information_cron
+lecture_information_erreur
 verification_couleur
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
@@ -2627,6 +2715,8 @@ menu
 menu_configuration_bases_centreon()
 {
 
+lecture_information_base_donnees_centreon
+
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
 
@@ -2675,6 +2765,26 @@ case $valret in
 
 	cat <<- EOF > $fichtemp
 	update sauvegarde_ftp 
+	set cron_activer='non', erreur='oui' 
+	where uname='`uname -n`' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	update sauvegarde_ftps
+	set cron_activer='non', erreur='oui' 
+	where uname='`uname -n`' and application='centreon' ;
+	EOF
+
+	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+	rm -f $fichtemp
+
+	cat <<- EOF > $fichtemp
+	update sauvegarde_sftp 
 	set cron_activer='non', erreur='oui' 
 	where uname='`uname -n`' and application='centreon' ;
 	EOF
@@ -2802,6 +2912,8 @@ case $valret in
 	suppression_script_sauvegarde_local
 	suppression_script_sauvegarde_reseau
 	suppression_script_sauvegarde_ftp
+	suppression_script_sauvegarde_ftps
+	suppression_script_sauvegarde_sftp
 	;;
 
  1)	# Appuyé sur Touche CTRL C
@@ -2829,6 +2941,8 @@ menu_configuration_sauvegarde_centreon_local()
 if [ "$nombre_bases_lister" = "0" ] ; then
 	message_erreur
 else
+
+lecture_information_sauvegarde_local
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
@@ -2959,6 +3073,8 @@ menu_configuration_sauvegarde_centreon_reseau()
 if [ "$nombre_bases_lister" = "0" ] ; then
 	message_erreur
 else
+
+lecture_information_sauvegarde_reseau
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
@@ -3228,7 +3344,8 @@ menu_configuration_sauvegarde_centreon
 menu_configuration_sauvegarde_centreon_ftp_ftps_sftp()
 {
 
-lecture_valeurs_base_donnees
+lecture_information_cron
+lecture_information_erreur
 verification_couleur
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
@@ -3300,7 +3417,7 @@ menu_configuration_sauvegarde_centreon
 menu_execution_sauvegarde_centreon_ftp_ftps_sftp()
 {
 
-lecture_valeurs_base_donnees
+lecture_information_erreur
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
@@ -3398,6 +3515,8 @@ menu_configuration_sauvegarde_centreon_ftp()
 if [ "$nombre_bases_lister" = "0" ] ; then
 	message_erreur
 else
+
+lecture_information_sauvegarde_ftp
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
@@ -3625,6 +3744,8 @@ menu_configuration_sauvegarde_centreon_ftps()
 if [ "$nombre_bases_lister" = "0" ] ; then
 	message_erreur
 else
+
+lecture_information_sauvegarde_ftps
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
@@ -3912,6 +4033,8 @@ menu_configuration_sauvegarde_centreon_sftp()
 if [ "$nombre_bases_lister" = "0" ] ; then
 	message_erreur
 else
+
+lecture_information_sauvegarde_sftp
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
