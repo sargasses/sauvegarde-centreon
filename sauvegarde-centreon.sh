@@ -2281,53 +2281,53 @@ else
 fi
 
 if [ "$lecture_erreur_local" = "oui" ] ; then
-	choix3="\ZB\Z1Configuration Sauvegarde Local\Zn" 
+	choix3="\Z1Configuration Sauvegarde Local\Zn" 
 
 elif [ "$lecture_cron_local" = "non" ] ; then
-	choix3="\Zb\Z3Configuration Sauvegarde Local\Zn" 
+	choix3="\Z5Configuration Sauvegarde Local\Zn" 
 
 else
-	choix3="\ZB\Z2Configuration Sauvegarde Local\Zn" 
+	choix3="\Z2Configuration Sauvegarde Local\Zn" 
 fi
 
 if [ "$lecture_erreur_reseau" = "oui" ] ; then
-	choix4="\ZB\Z1Configuration Sauvegarde Reseau\Zn" 
+	choix4="\Z1Configuration Sauvegarde Reseau\Zn" 
 
 elif [ "$lecture_cron_reseau" = "non" ] ; then
-	choix4="\Zb\Z3Configuration Sauvegarde Reseau\Zn" 
+	choix4="\Z5Configuration Sauvegarde Reseau\Zn" 
 
 else
-	choix4="\ZB\Z2Configuration Sauvegarde Reseau\Zn" 
+	choix4="\Z2Configuration Sauvegarde Reseau\Zn" 
 fi
 
 if [ "$lecture_erreur_ftp" = "oui" ] ; then
-	choix5="\ZB\Z1Configuration Sauvegarde FTP\Zn" 
+	choix5="\Z1Configuration Sauvegarde FTP\Zn" 
 
 elif [ "$lecture_cron_ftp" = "non" ] ; then
-	choix5="\Zb\Z3Configuration Sauvegarde FTP\Zn" 
+	choix5="\Z5Configuration Sauvegarde FTP\Zn" 
 
 else
-	choix5="\ZB\Z2Configuration Sauvegarde FTP\Zn" 
+	choix5="\Z2Configuration Sauvegarde FTP\Zn" 
 fi
 
 if [ "$lecture_erreur_ftps" = "oui" ] ; then
-	choix6="\ZB\Z1Configuration Sauvegarde FTPS\Zn" 
+	choix6="\Z1Configuration Sauvegarde FTPS\Zn" 
 
 elif [ "$lecture_cron_ftps" = "non" ] ; then
-	choix6="\Zb\Z3Configuration Sauvegarde FTPS\Zn" 
+	choix6="\Z5Configuration Sauvegarde FTPS\Zn" 
 
 else
-	choix6="\ZB\Z2Configuration Sauvegarde FTPS\Zn" 
+	choix6="\Z2Configuration Sauvegarde FTPS\Zn" 
 fi
 
 if [ "$lecture_erreur_sftp" = "oui" ] ; then
-	choix7="\ZB\Z1Configuration Sauvegarde SFTP\Zn" 
+	choix7="\Z1Configuration Sauvegarde SFTP\Zn" 
 
 elif [ "$lecture_cron_sftp" = "non" ] ; then
-	choix7="\Zb\Z3Configuration Sauvegarde SFTP\Zn" 
+	choix7="\Z5Configuration Sauvegarde SFTP\Zn" 
 
 else
-	choix7="\ZB\Z2Configuration Sauvegarde SFTP\Zn" 
+	choix7="\Z2Configuration Sauvegarde SFTP\Zn" 
 fi
 
 }
@@ -2497,7 +2497,7 @@ $DIALOG --backtitle "Configuration Sauvegarde Centreon" \
 	 --clear \
 	 --colors \
 	 --default-item "8" \
-	 --menu "Quel est votre choix" 15 60 8 \
+	 --menu "Quel est votre choix" 15 58 8 \
 	 "1" "$choix2" \
 	 "2" "$choix3" \
 	 "3" "$choix4" \
@@ -3247,7 +3247,7 @@ $DIALOG --backtitle "Configuration Sauvegarde Centreon" \
 	 --clear \
 	 --colors \
 	 --default-item "4" \
-	 --menu "Quel est votre choix" 11 58 4 \
+	 --menu "Quel est votre choix" 11 54 4 \
 	 "1" "$choix5" \
 	 "2" "$choix6" \
 	 "3" "$choix7" \
