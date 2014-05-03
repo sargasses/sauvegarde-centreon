@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 23-04-2014
+# Date : 03-05-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -193,132 +193,6 @@ if [ "$VAR14" = "" ] ; then
 else
 	REF14=$VAR14
 fi
-
-}
-
-#############################################################################
-# Fonction Creation Automatique des Scripts Sauvegarde
-#############################################################################
-
-creation_automatique_scripts_sauvegarde()
-{
-
-fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
-
-if [ "$VAR15" = "OUI" ] &&
-   [ ! -f $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE ] ; then
-
-
-	cat <<- EOF > $fichtemp
-	select nombre_bases
-	from information
-	where uname='`uname -n`' and application='centreon' ;
-	EOF
-
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/nombre-bases-lister.txt
-
-	nombre_bases_lister=$(sed '$!d' /tmp/nombre-bases-lister.txt)
-	rm -f /tmp/nombre-bases-lister.txt
-	rm -f $fichtemp
-
-	if [ "$nombre_bases_lister" != "0" ] ; then
-
-	creation_fichier_cron_sauvegarde
-	
-	fi
-
-	cat <<- EOF > $fichtemp
-	select cron_activer
-	from sauvegarde_local
-	where uname='`uname -n`' and application='centreon' ;
-	EOF
-
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/cron-sauvegarde-local.txt
-
-	cron_sauvegarde_local=$(sed '$!d' /tmp/cron-sauvegarde-local.txt)
-	rm -f /tmp/cron-sauvegarde-local.txt
-	rm -f $fichtemp
-
-	if [ "$cron_sauvegarde_local" = "oui" ] ; then
-
-	creation_script_sauvegarde_local
-	
-	fi
-
-	cat <<- EOF > $fichtemp
-	select cron_activer
-	from sauvegarde_reseau
-	where uname='`uname -n`' and application='centreon' ;
-	EOF
-
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/cron-sauvegarde-reseau.txt
-
-	cron_sauvegarde_reseau=$(sed '$!d' /tmp/cron-sauvegarde-reseau.txt)
-	rm -f /tmp/cron-sauvegarde-reseau.txt
-	rm -f $fichtemp
-
-	if [ "$cron_sauvegarde_reseau" = "oui" ] ; then
-
-	creation_script_sauvegarde_reseau
-	
-	fi
-
-	cat <<- EOF > $fichtemp
-	select cron_activer
-	from sauvegarde_ftp
-	where uname='`uname -n`' and application='centreon' ;
-	EOF
-
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/cron-sauvegarde-ftp.txt
-
-	cron_sauvegarde_ftp=$(sed '$!d' /tmp/cron-sauvegarde-ftp.txt)
-	rm -f /tmp/cron-sauvegarde-ftp.txt
-	rm -f $fichtemp
-
-	if [ "$cron_sauvegarde_ftp" = "oui" ] ; then
-
-	creation_script_sauvegarde_ftp
-	
-	fi
-
-	cat <<- EOF > $fichtemp
-	select cron_activer
-	from sauvegarde_ftps
-	where uname='`uname -n`' and application='centreon' ;
-	EOF
-
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/cron-sauvegarde-ftps.txt
-
-	cron_sauvegarde_ftps=$(sed '$!d' /tmp/cron-sauvegarde-ftps.txt)
-	rm -f /tmp/cron-sauvegarde-ftps.txt
-	rm -f $fichtemp
-
-	if [ "$cron_sauvegarde_ftps" = "oui" ] ; then
-
-	creation_script_sauvegarde_ftps
-	
-	fi
-
-	cat <<- EOF > $fichtemp
-	select cron_activer
-	from sauvegarde_sftp
-	where uname='`uname -n`' and application='centreon' ;
-	EOF
-
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/cron-sauvegarde-sftp.txt
-
-	cron_sauvegarde_sftp=$(sed '$!d' /tmp/cron-sauvegarde-sftp.txt)
-	rm -f /tmp/cron-sauvegarde-sftp.txt
-	rm -f $fichtemp
-
-	if [ "$cron_sauvegarde_sftp" = "oui" ] ; then
-
-	creation_script_sauvegarde_sftp
-	
-	fi
-fi
-
-rm -f $fichtemp
 
 }
 
@@ -1086,6 +960,18 @@ rm -f /tmp/lecture-port.txt
 rm -f $fichtemp
 
 cat <<- EOF > $fichtemp
+select dossier
+from sauvegarde_sftp
+where uname='`uname -n`' and application='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-dossier.txt
+
+lecture_dossier=$(sed '$!d' /tmp/lecture-dossier.txt)
+rm -f /tmp/lecture-dossier.txt
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
 select utilisateur
 from sauvegarde_sftp
 where uname='`uname -n`' and application='centreon' ;
@@ -1170,42 +1056,48 @@ else
 	REF71=$lecture_port
 fi
 
-if [ "$lecture_utilisateur" = "" ] ; then
-	REF72=admin
+if [ "$lecture_dossier" = "" ] ; then
+	REF72=Sauvegarde
 else
-	REF72=$lecture_utilisateur
+	REF72=$lecture_dossier
+fi
+
+if [ "$lecture_utilisateur" = "" ] ; then
+	REF73=admin
+else
+	REF73=$lecture_utilisateur
 fi
 
 if [ "$lecture_password" = "" ] ; then
-	REF73=admin
+	REF74=admin
 else
-	REF73=$lecture_password
+	REF74=$lecture_password
 fi
 
 if [ "$lecture_heures" = "" ] ; then
-	REF74=21
+	REF75=21
 else
-	REF74=$lecture_heures
+	REF75=$lecture_heures
 fi
 
 if [ "$lecture_minutes" = "" ] ; then
-	REF75=30
+	REF76=30
 else
-	REF75=$lecture_minutes
+	REF76=$lecture_minutes
 fi
 
 if [ "$lecture_jours" = "" ] ; then
-	REF76=1-7
+	REF77=1-7
 else
-	REF76=$lecture_jours
+	REF77=$lecture_jours
 fi
 
 if [ "$lecture_retentions" = "" ] ; then
-	REF77=31
-	REF78=00
+	REF78=31
+	REF79=00
 else
-	REF77=$lecture_retentions
 	REF78=$lecture_retentions
+	REF79=$lecture_retentions
 fi
 
 }
@@ -1432,7 +1324,7 @@ RETENTION_CENTREON_LOCAL='`date +%d-%m-%Y --date '"'$REF34 days ago'"'`'
 RETENTION_CENTREON_RESEAU='`date +%d-%m-%Y --date '"'$REF47 days ago'"'`'
 RETENTION_CENTREON_FTP='`date +%d-%m-%Y --date '"'$REF58 days ago'"'`'
 RETENTION_CENTREON_FTPS='`date +%d-%m-%Y --date '"'$REF68 days ago'"'`'
-RETENTION_CENTREON_SFTP='`date +%d.%m.%y --date '"'$REF77 days ago'"'`'
+RETENTION_CENTREON_SFTP='`date +%d.%m.%y --date '"'$REF78 days ago'"'`'
 
 }
 
@@ -1652,7 +1544,7 @@ echo "mysqldump -h `uname -n` -u $REF20 -p$REF21 $REF24 --databases > $TMP/$NOMB
 echo "cd $TMP/$NOMBRE_ALEATOIRE/" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
 echo "tar cfvz $TMP/$NOMBRE_ALEATOIRE/Centreon-`uname -n`-$DATE_HEURE.tgz $PLUGINS/ /usr/local/centreon/www/img/media/ /var/lib/centreon/ /etc/centreon/ dump-mysql/ plateforme/ -P" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
 echo "touch Centreon-`uname -n`-$RETENTION_CENTREON_FTPS.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
-echo "sshpass -p $REF73 sftp -o StrictHostKeyChecking=no -o LogLevel=quiet -P $REF71 $REF72@$REF70<<transfert-sftp" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
+echo "sshpass -p $REF74 sftp -o StrictHostKeyChecking=no -o LogLevel=quiet -P $REF71 $REF73@$REF70<<transfert-sftp" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
 echo "lcd $TMP/$NOMBRE_ALEATOIRE" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
 echo "put Centreon-`uname -n`-$DATE_HEURE.tgz" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
 echo "put Centreon-`uname -n`-$RETENTION_CENTREON_FTPS.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP
@@ -2010,7 +1902,7 @@ REF86=`expr $REF86 + 1`
 echo "touch Centreon-`uname -n`-$PURGE.txt" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
 done
 
-echo "sshpass -p $REF73 sftp -o StrictHostKeyChecking=no -o LogLevel=quiet -P $REF71 $REF72@$REF70<<purge-sftp" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
+echo "sshpass -p $REF74 sftp -o StrictHostKeyChecking=no -o LogLevel=quiet -P $REF71 $REF73@$REF70<<purge-sftp" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
 echo "lcd $TMP/$NOMBRE_ALEATOIRE" >> $REPERTOIRE_SCRIPTS/$FICHIER_PURGE_CENTREON_SFTP
 
 
@@ -2120,12 +2012,12 @@ fi
 
 if [ "$lecture_cron_sftp" = "oui" ] ; then
 	ligne=$(sed -n '/###### Sauvegarde Centreon SFTP ######/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
-	sed -i "`expr $ligne + 2`"i"$REF75 $REF74 * * $REF76 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
+	sed -i "`expr $ligne + 2`"i"$REF76 $REF75 * * $REF77 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
 fi
 
 if [ "$lecture_cron_sftp" = "non" ] ; then
 	ligne=$(sed -n '/###### Sauvegarde Centreon SFTP ######/=' $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE)
-	sed -i "`expr $ligne + 2`"i"#$REF75 $REF74 * * $REF76 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
+	sed -i "`expr $ligne + 2`"i"#$REF76 $REF75 * * $REF77 root $REPERTOIRE_SCRIPTS/$FICHIER_SCRIPTS_CENTREON_SFTP" /$REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
 fi
 
 /etc/init.d/cron restart &> /dev/null
@@ -2448,7 +2340,6 @@ menu()
 {
 
 lecture_config_centraliser_sauvegarde
-creation_automatique_scripts_sauvegarde
 verification_couleur
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
@@ -2744,8 +2635,8 @@ case $valret in
 
 
 	cat <<- EOF > $fichtemp
-	update sauvegarde_local 
-	set cron_activer='non', erreur='oui' 
+	update sauvegarde_local
+	set cron_activer='non', erreur='oui'
 	where uname='`uname -n`' and application='centreon' ;
 	EOF
 
@@ -2754,8 +2645,8 @@ case $valret in
 	rm -f $fichtemp
 
 	cat <<- EOF > $fichtemp
-	update sauvegarde_reseau 
-	set cron_activer='non', erreur='oui' 
+	update sauvegarde_reseau
+	set cron_activer='non', erreur='oui'
 	where uname='`uname -n`' and application='centreon' ;
 	EOF
 
@@ -2764,8 +2655,8 @@ case $valret in
 	rm -f $fichtemp
 
 	cat <<- EOF > $fichtemp
-	update sauvegarde_ftp 
-	set cron_activer='non', erreur='oui' 
+	update sauvegarde_ftp
+	set cron_activer='non', erreur='oui'
 	where uname='`uname -n`' and application='centreon' ;
 	EOF
 
@@ -2775,7 +2666,7 @@ case $valret in
 
 	cat <<- EOF > $fichtemp
 	update sauvegarde_ftps
-	set cron_activer='non', erreur='oui' 
+	set cron_activer='non', erreur='oui'
 	where uname='`uname -n`' and application='centreon' ;
 	EOF
 
@@ -2784,8 +2675,8 @@ case $valret in
 	rm -f $fichtemp
 
 	cat <<- EOF > $fichtemp
-	update sauvegarde_sftp 
-	set cron_activer='non', erreur='oui' 
+	update sauvegarde_sftp
+	set cron_activer='non', erreur='oui'
 	where uname='`uname -n`' and application='centreon' ;
 	EOF
 
@@ -4048,12 +3939,13 @@ $DIALOG --ok-label "Activation" \
 	 --mixedform "Configuration Sauvegarde SFTP" 16 62 0 \
 	 "Nom Du Serveur SFTP:"        1 1 "$REF70"  1 28  28 28 0  \
 	 "Numero Port SFTP:"           2 1 "$REF71"  2 28  28 28 0  \
-	 "Nom De L'Utilisateur:"       3 1 "$REF72"  3 28  28 28 0  \
-	 "Saisie Du Password:"         4 1 "$REF73"  4 28  28 28 0  \
-	 "Planification Des Heures:"   5 1 "$REF74"  5 28  28 28 0  \
-	 "Planification Des Minutes:"  6 1 "$REF75"  6 28  03 03 0  \
-	 "Planification Des Jours:"    7 1 "$REF76"  7 28  14 14 0  \
-	 "Choix De La Retention:"      8 1 "$REF77"  8 28  04 04 0  2> $fichtemp
+	 "Nom Du Dossier SFTP:"        3 1 "$REF72"  3 28  28 28 0  \
+	 "Nom De L'Utilisateur:"       4 1 "$REF73"  4 28  28 28 0  \
+	 "Saisie Du Password:"         5 1 "$REF74"  5 28  28 28 0  \
+	 "Planification Des Heures:"   6 1 "$REF75"  6 28  28 28 0  \
+	 "Planification Des Minutes:"  7 1 "$REF76"  7 28  03 03 0  \
+	 "Planification Des Jours:"    8 1 "$REF77"  8 28  14 14 0  \
+	 "Choix De La Retention:"      9 1 "$REF78"  9 28  04 04 0  2> $fichtemp
 
 
 valret=$?
@@ -4069,7 +3961,8 @@ case $valret in
 	VARSAISI15=$(sed -n 6p $fichtemp)
 	VARSAISI16=$(sed -n 7p $fichtemp)
 	VARSAISI17=$(sed -n 8p $fichtemp)
-	VARSAISI18=$REF78
+	VARSAISI18=$(sed -n 9p $fichtemp)
+	VARSAISI19=$REF79
 
 
 	ping -c 4 $VARSAISI10 >/dev/null 2>&1
@@ -4080,7 +3973,7 @@ case $valret in
 		bye
 		EOF
 
-		sshpass -p $VARSAISI13 sftp -o StrictHostKeyChecking=no -o LogLevel=quiet -P $VARSAISI11 $VARSAISI12@$VARSAISI10 < $fichtemp > verification-connexion-sftp.txt 2>&1
+		sshpass -p $VARSAISI14 sftp -o StrictHostKeyChecking=no -o LogLevel=quiet -P $VARSAISI11 $VARSAISI13@$VARSAISI10 < $fichtemp > verification-connexion-sftp.txt 2>&1
 
 		rm -f $fichtemp
 
@@ -4098,8 +3991,8 @@ case $valret in
 			rm -f $fichtemp
 	
 			cat <<- EOF > $fichtemp
-			insert into sauvegarde_sftp ( uname, serveur, port, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
-			values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'oui' , 'non' , 'centreon' ) ;
+			insert into sauvegarde_sftp ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+			values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'oui' , 'non' , 'centreon' ) ;
 			EOF
 
 			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
@@ -4185,7 +4078,8 @@ case $valret in
 	VARSAISI15=$(sed -n 6p $fichtemp)
 	VARSAISI16=$(sed -n 7p $fichtemp)
 	VARSAISI17=$(sed -n 8p $fichtemp)
-	VARSAISI18=$REF78
+	VARSAISI18=$(sed -n 9p $fichtemp)
+	VARSAISI19=$REF79
 
 
 	ping -c 4 $VARSAISI10 >/dev/null 2>&1
@@ -4196,7 +4090,7 @@ case $valret in
 		bye
 		EOF
 
-		sshpass -p $VARSAISI13 sftp -o StrictHostKeyChecking=no -o LogLevel=quiet -P $VARSAISI11 $VARSAISI12@$VARSAISI10 < $fichtemp > verification-connexion-sftp.txt 2>&1
+		sshpass -p $VARSAISI14 sftp -o StrictHostKeyChecking=no -o LogLevel=quiet -P $VARSAISI11 $VARSAISI13@$VARSAISI10 < $fichtemp > verification-connexion-sftp.txt 2>&1
 
 		rm -f $fichtemp
 
@@ -4214,8 +4108,8 @@ case $valret in
 			rm -f $fichtemp
 	
 			cat <<- EOF > $fichtemp
-			insert into sauvegarde_sftp ( uname, serveur, port, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
-			values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'non' , 'non' , 'centreon' ) ;
+			insert into sauvegarde_sftp ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+			values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'non' , 'non' , 'centreon' ) ;
 			EOF
 
 			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
