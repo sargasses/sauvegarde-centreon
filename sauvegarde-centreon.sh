@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 03-05-2014
+# Date : 05-05-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -2281,53 +2281,53 @@ else
 fi
 
 if [ "$lecture_erreur_local" = "oui" ] ; then
-	choix3="\Z1Configuration Sauvegarde Local\Zn" 
+	choix3="\ZB\Z1Configuration Sauvegarde Local\Zn" 
 
 elif [ "$lecture_cron_local" = "non" ] ; then
-	choix3="\Z5Configuration Sauvegarde Local\Zn" 
+	choix3="\Zb\Z3Configuration Sauvegarde Local\Zn" 
 
 else
-	choix3="\Z2Configuration Sauvegarde Local\Zn" 
+	choix3="\ZB\Z2Configuration Sauvegarde Local\Zn" 
 fi
 
 if [ "$lecture_erreur_reseau" = "oui" ] ; then
-	choix4="\Z1Configuration Sauvegarde Reseau\Zn" 
+	choix4="\ZB\Z1Configuration Sauvegarde Reseau\Zn" 
 
 elif [ "$lecture_cron_reseau" = "non" ] ; then
-	choix4="\Z5Configuration Sauvegarde Reseau\Zn" 
+	choix4="\Zb\Z3Configuration Sauvegarde Reseau\Zn" 
 
 else
-	choix4="\Z2Configuration Sauvegarde Reseau\Zn" 
+	choix4="\ZB\Z2Configuration Sauvegarde Reseau\Zn" 
 fi
 
 if [ "$lecture_erreur_ftp" = "oui" ] ; then
-	choix5="\Z1Configuration Sauvegarde FTP\Zn" 
+	choix5="\ZB\Z1Configuration Sauvegarde FTP\Zn" 
 
 elif [ "$lecture_cron_ftp" = "non" ] ; then
-	choix5="\Z5Configuration Sauvegarde FTP\Zn" 
+	choix5="\Zb\Z3Configuration Sauvegarde FTP\Zn" 
 
 else
-	choix5="\Z2Configuration Sauvegarde FTP\Zn" 
+	choix5="\ZB\Z2Configuration Sauvegarde FTP\Zn" 
 fi
 
 if [ "$lecture_erreur_ftps" = "oui" ] ; then
-	choix6="\Z1Configuration Sauvegarde FTPS\Zn" 
+	choix6="\ZB\Z1Configuration Sauvegarde FTPS\Zn" 
 
 elif [ "$lecture_cron_ftps" = "non" ] ; then
-	choix6="\Z5Configuration Sauvegarde FTPS\Zn" 
+	choix6="\Zb\Z3Configuration Sauvegarde FTPS\Zn" 
 
 else
-	choix6="\Z2Configuration Sauvegarde FTPS\Zn" 
+	choix6="\ZB\Z2Configuration Sauvegarde FTPS\Zn" 
 fi
 
 if [ "$lecture_erreur_sftp" = "oui" ] ; then
-	choix7="\Z1Configuration Sauvegarde SFTP\Zn" 
+	choix7="\ZB\Z1Configuration Sauvegarde SFTP\Zn" 
 
 elif [ "$lecture_cron_sftp" = "non" ] ; then
-	choix7="\Z5Configuration Sauvegarde SFTP\Zn" 
+	choix7="\Zb\Z3Configuration Sauvegarde SFTP\Zn" 
 
 else
-	choix7="\Z2Configuration Sauvegarde SFTP\Zn" 
+	choix7="\ZB\Z2Configuration Sauvegarde SFTP\Zn" 
 fi
 
 }
@@ -2497,13 +2497,13 @@ $DIALOG --backtitle "Configuration Sauvegarde Centreon" \
 	 --clear \
 	 --colors \
 	 --default-item "8" \
-	 --menu "Quel est votre choix" 15 58 8 \
+	 --menu "Quel est votre choix" 15 60 8 \
 	 "1" "$choix2" \
 	 "2" "$choix3" \
 	 "3" "$choix4" \
 	 "4" "Configuration Sauvegarde FTP/FTPS/SFTP" \
-	 "5" "Execution Sauvegarde Local" \
-	 "6" "Execution Sauvegarde Reseau" \
+	 "5" "\Z5Execution Sauvegarde Local\Zn" \
+	 "6" "\Z5Execution Sauvegarde Reseau\Zn" \
 	 "7" "Execution Sauvegarde FTP/FTPS/SFTP" \
 	 "8" "\Z4Retour\Zn" 2> $fichtemp
 
@@ -3247,7 +3247,7 @@ $DIALOG --backtitle "Configuration Sauvegarde Centreon" \
 	 --clear \
 	 --colors \
 	 --default-item "4" \
-	 --menu "Quel est votre choix" 11 54 4 \
+	 --menu "Quel est votre choix" 11 58 4 \
 	 "1" "$choix5" \
 	 "2" "$choix6" \
 	 "3" "$choix7" \
@@ -3318,10 +3318,10 @@ $DIALOG --backtitle "Configuration Sauvegarde Centreon" \
 	 --clear \
 	 --colors \
 	 --default-item "4" \
-	 --menu "Quel est votre choix" 11 44 4 \
-	 "1" "Execution Sauvegarde FTP" \
-	 "2" "Execution Sauvegarde FTPS" \
-	 "3" "Execution Sauvegarde SFTP" \
+	 --menu "Quel est votre choix" 11 50 4 \
+	 "1" "\Z5Execution Sauvegarde FTP\Zn" \
+	 "2" "\Z5Execution Sauvegarde FTPS\Zn" \
+	 "3" "\Z5Execution Sauvegarde SFTP\Zn" \
 	 "4" "\Z4Retour\Zn" 2> $fichtemp
 
 
