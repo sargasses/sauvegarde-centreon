@@ -1389,8 +1389,10 @@ if [ "$resultat" -ge "3" ] ; then
 	if [ "$menu_origine" = "FTP" ] ||
 	   [ "$menu_origine" = "FTPS" ] ||
 	   [ "$menu_origine" = "SFTP" ]; then
+		rm -f /tmp/lecture-heures-minutes.txt
 		menu_configuration_sauvegarde_centreon_ftp_ftps_sftp
 	else
+		rm -f /tmp/lecture-heures-minutes.txt
 		menu_configuration_sauvegarde_centreon
 	fi
 fi
@@ -3001,6 +3003,7 @@ case $valret in
 	HEURE_MINUTE=$VARSAISI11$VARSAISI12
 	menu_origine=Local
 	
+	rm -f $fichtemp
 	verification_sauvegarde_simultane
 
 
@@ -3048,6 +3051,7 @@ case $valret in
 	HEURE_MINUTE=$VARSAISI11$VARSAISI12
 	menu_origine=Local
 	
+	rm -f $fichtemp
 	verification_sauvegarde_simultane
 
 
@@ -3152,6 +3156,7 @@ case $valret in
 	HEURE_MINUTE=$VARSAISI14$VARSAISI15
 	menu_origine=Reseau
 	
+	rm -f $fichtemp
 	verification_sauvegarde_simultane
 
 
@@ -3268,6 +3273,7 @@ case $valret in
 	HEURE_MINUTE=$VARSAISI14$VARSAISI15
 	menu_origine=Reseau
 	
+	rm -f $fichtemp
 	verification_sauvegarde_simultane
 
 
@@ -3608,6 +3614,7 @@ case $valret in
 	HEURE_MINUTE=$VARSAISI15$VARSAISI16
 	menu_origine=FTP
 	
+	rm -f $fichtemp
 	verification_sauvegarde_simultane
 
 
@@ -3701,6 +3708,7 @@ case $valret in
 	HEURE_MINUTE=$VARSAISI15$VARSAISI16
 	menu_origine=FTP
 	
+	rm -f $fichtemp
 	verification_sauvegarde_simultane
 
 
@@ -3849,6 +3857,7 @@ case $valret in
 	HEURE_MINUTE=$VARSAISI15$VARSAISI16
 	menu_origine=FTPS
 	
+	rm -f $fichtemp
 	verification_sauvegarde_simultane
 
 
@@ -3972,6 +3981,7 @@ case $valret in
 	HEURE_MINUTE=$VARSAISI15$VARSAISI16
 	menu_origine=FTPS
 	
+	rm -f $fichtemp
 	verification_sauvegarde_simultane
 
 
@@ -4150,6 +4160,7 @@ case $valret in
 	HEURE_MINUTE=$VARSAISI15$VARSAISI16
 	menu_origine=SFTP
 	
+	rm -f $fichtemp
 	verification_sauvegarde_simultane
 
 
@@ -4273,6 +4284,7 @@ case $valret in
 	HEURE_MINUTE=$VARSAISI15$VARSAISI16
 	menu_origine=SFTP
 	
+	rm -f $fichtemp
 	verification_sauvegarde_simultane
 
 
