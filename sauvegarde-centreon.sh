@@ -56,6 +56,19 @@ fi
 
 
 #############################################################################
+# Fonction Verification Installation Client FTP 
+#############################################################################
+
+
+if [ ! -f /usr/bin/ftp-ssl ] ; then
+	echo "Le programme ftp-ssl n'est pas installé!"
+	apt-get -y install ftp-ssl
+else
+	echo "Le programme ftp-ssl est déjà installé!"
+fi
+
+
+#############################################################################
 # Fonction Activation De La Banner Pour SSH
 #############################################################################
 
@@ -4277,7 +4290,7 @@ case $valret in
 			fi
 
 		else
-		
+
 			cat <<- EOF > $fichtemp
 			update sauvegarde_ftp
 			set cron_activer='non', erreur='oui'
@@ -4653,7 +4666,7 @@ case $valret in
 		fi
 
 	else
-		
+
 		cat <<- EOF > $fichtemp
 		update sauvegarde_ftps
 		set cron_activer='non', erreur='oui'
