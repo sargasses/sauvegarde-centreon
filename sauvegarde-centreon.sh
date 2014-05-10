@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 07-05-2014
+# Date : 10-05-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -30,6 +30,8 @@ FICHIER_PURGE_CENTREON_RESEAU=purge_centreon_reseau.sh
 FICHIER_PURGE_CENTREON_FTP=purge_centreon_ftp.sh
 FICHIER_PURGE_CENTREON_FTPS=purge_centreon_ftps.sh
 FICHIER_PURGE_CENTREON_SFTP=purge_centreon_sftp.sh
+
+SAUVEGARDE_SIMULTANE=3
 
 REPERTOIRE_CRON=/etc/cron.d
 FICHIER_CRON_SAUVEGARDE=sauvegarde_centreon
@@ -1289,18 +1291,19 @@ fi
 }
 
 #############################################################################
-# Fonction Verification Sauvegarde Progammer simultanément
+# Fonction Lecture Sauvegarde simultanément Pour Sauvegarde Local
 #############################################################################
 
-verification_sauvegarde_simultane()
+lecture_information_sauvegarde_simultane_local()
 {
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
+
 cat <<- EOF > $fichtemp
 select heures,minutes
 from sauvegarde_local
-where uname='`uname -n`' and cron_activer='oui' ;
+where uname='`uname -n`' and application!='centreon' ;
 EOF
 
 mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-local.txt
@@ -1310,11 +1313,10 @@ sed -i "s/\t//ig" /tmp/lecture-heures-minutes-local.txt
 
 rm -f $fichtemp
 
-
 cat <<- EOF > $fichtemp
 select heures,minutes
 from sauvegarde_reseau
-where uname='`uname -n`' and cron_activer='oui' ;
+where uname='`uname -n`' ;
 EOF
 
 mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-reseau.txt
@@ -1324,11 +1326,10 @@ sed -i "s/\t//ig" /tmp/lecture-heures-minutes-reseau.txt
 
 rm -f $fichtemp
 
-
 cat <<- EOF > $fichtemp
 select heures,minutes
 from sauvegarde_ftp
-where uname='`uname -n`' and cron_activer='oui' ;
+where uname='`uname -n`' ;
 EOF
 
 mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-ftp.txt
@@ -1338,11 +1339,10 @@ sed -i "s/\t//ig" /tmp/lecture-heures-minutes-ftp.txt
 
 rm -f $fichtemp
 
-
 cat <<- EOF > $fichtemp
 select heures,minutes
 from sauvegarde_ftps
-where uname='`uname -n`' and cron_activer='oui' ;
+where uname='`uname -n`' ;
 EOF
 
 mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-ftps.txt
@@ -1352,11 +1352,10 @@ sed -i "s/\t//ig" /tmp/lecture-heures-minutes-ftps.txt
 
 rm -f $fichtemp
 
-
 cat <<- EOF > $fichtemp
 select heures,minutes
 from sauvegarde_sftp
-where uname='`uname -n`' and cron_activer='oui' ;
+where uname='`uname -n`' ;
 EOF
 
 mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-sftp.txt
@@ -1366,6 +1365,94 @@ sed -i "s/\t//ig" /tmp/lecture-heures-minutes-sftp.txt
 
 rm -f $fichtemp
 
+cat /tmp/lecture-heures-minutes-local.txt > /tmp/lecture-heures-minutes.txt
+cat /tmp/lecture-heures-minutes-reseau.txt >> /tmp/lecture-heures-minutes.txt
+cat /tmp/lecture-heures-minutes-ftp.txt >> /tmp/lecture-heures-minutes.txt
+cat /tmp/lecture-heures-minutes-ftps.txt >> /tmp/lecture-heures-minutes.txt
+cat /tmp/lecture-heures-minutes-sftp.txt >> /tmp/lecture-heures-minutes.txt
+
+rm -f /tmp/lecture-heures-minutes-local.txt	    
+rm -f /tmp/lecture-heures-minutes-reseau.txt
+rm -f /tmp/lecture-heures-minutes-ftp.txt
+rm -f /tmp/lecture-heures-minutes-ftps.txt
+rm -f /tmp/lecture-heures-minutes-sftp.txt
+
+}
+
+#############################################################################
+# Fonction Lecture Sauvegarde simultanément Pour Sauvegarde Reseau
+#############################################################################
+
+lecture_information_sauvegarde_simultane_reseau()
+{
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_local
+where uname='`uname -n`' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-local.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-local.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-local.txt
+
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_reseau
+where uname='`uname -n`' and application!='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-reseau.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-reseau.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-reseau.txt
+
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_ftp
+where uname='`uname -n`' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-ftp.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-ftp.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-ftp.txt
+
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_ftps
+where uname='`uname -n`' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-ftps.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-ftps.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-ftps.txt
+
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_sftp
+where uname='`uname -n`' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-sftp.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-sftp.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-sftp.txt
+
+rm -f $fichtemp
 
 cat /tmp/lecture-heures-minutes-local.txt > /tmp/lecture-heures-minutes.txt
 cat /tmp/lecture-heures-minutes-reseau.txt >> /tmp/lecture-heures-minutes.txt
@@ -1373,29 +1460,278 @@ cat /tmp/lecture-heures-minutes-ftp.txt >> /tmp/lecture-heures-minutes.txt
 cat /tmp/lecture-heures-minutes-ftps.txt >> /tmp/lecture-heures-minutes.txt
 cat /tmp/lecture-heures-minutes-sftp.txt >> /tmp/lecture-heures-minutes.txt
 	    
-
 rm -f /tmp/lecture-heures-minutes-local.txt
 rm -f /tmp/lecture-heures-minutes-reseau.txt
 rm -f /tmp/lecture-heures-minutes-ftp.txt
 rm -f /tmp/lecture-heures-minutes-ftps.txt
 rm -f /tmp/lecture-heures-minutes-sftp.txt
 
+}
 
-resultat=$(grep -c "$HEURE_MINUTE" /tmp/lecture-heures-minutes.txt)
+#############################################################################
+# Fonction Lecture Sauvegarde simultanément Pour Sauvegarde FTP
+#############################################################################
+
+lecture_information_sauvegarde_simultane_ftp()
+{
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
 
 
-if [ "$resultat" -ge "3" ] ; then
-	message_erreur_sauvegarde_simultane
-	if [ "$menu_origine" = "FTP" ] ||
-	   [ "$menu_origine" = "FTPS" ] ||
-	   [ "$menu_origine" = "SFTP" ]; then
-		rm -f /tmp/lecture-heures-minutes.txt
-		menu_configuration_sauvegarde_centreon_ftp_ftps_sftp
-	else
-		rm -f /tmp/lecture-heures-minutes.txt
-		menu_configuration_sauvegarde_centreon
-	fi
-fi
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_local
+where uname='`uname -n`' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-local.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-local.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-local.txt
+
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_reseau
+where uname='`uname -n`' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-reseau.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-reseau.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-reseau.txt
+
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_ftp
+where uname='`uname -n`' and application!='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-ftp.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-ftp.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-ftp.txt
+
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_ftps
+where uname='`uname -n`' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-ftps.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-ftps.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-ftps.txt
+
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_sftp
+where uname='`uname -n`' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-sftp.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-sftp.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-sftp.txt
+
+rm -f $fichtemp
+
+cat /tmp/lecture-heures-minutes-local.txt > /tmp/lecture-heures-minutes.txt
+cat /tmp/lecture-heures-minutes-reseau.txt >> /tmp/lecture-heures-minutes.txt
+cat /tmp/lecture-heures-minutes-ftp.txt >> /tmp/lecture-heures-minutes.txt
+cat /tmp/lecture-heures-minutes-ftps.txt >> /tmp/lecture-heures-minutes.txt
+cat /tmp/lecture-heures-minutes-sftp.txt >> /tmp/lecture-heures-minutes.txt
+	    
+rm -f /tmp/lecture-heures-minutes-local.txt
+rm -f /tmp/lecture-heures-minutes-reseau.txt
+rm -f /tmp/lecture-heures-minutes-ftp.txt
+rm -f /tmp/lecture-heures-minutes-ftps.txt
+rm -f /tmp/lecture-heures-minutes-sftp.txt
+
+}
+
+#############################################################################
+# Fonction Lecture Sauvegarde simultanément Pour Sauvegarde FTPS
+#############################################################################
+
+lecture_information_sauvegarde_simultane_ftps()
+{
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_local
+where uname='`uname -n`' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-local.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-local.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-local.txt
+
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_reseau
+where uname='`uname -n`' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-reseau.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-reseau.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-reseau.txt
+
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_ftp
+where uname='`uname -n`' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-ftp.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-ftp.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-ftp.txt
+
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_ftps
+where uname='`uname -n`' and application!='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-ftps.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-ftps.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-ftps.txt
+
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_sftp
+where uname='`uname -n`' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-sftp.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-sftp.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-sftp.txt
+
+rm -f $fichtemp
+
+cat /tmp/lecture-heures-minutes-local.txt > /tmp/lecture-heures-minutes.txt
+cat /tmp/lecture-heures-minutes-reseau.txt >> /tmp/lecture-heures-minutes.txt
+cat /tmp/lecture-heures-minutes-ftp.txt >> /tmp/lecture-heures-minutes.txt
+cat /tmp/lecture-heures-minutes-ftps.txt >> /tmp/lecture-heures-minutes.txt
+cat /tmp/lecture-heures-minutes-sftp.txt >> /tmp/lecture-heures-minutes.txt
+	    
+rm -f /tmp/lecture-heures-minutes-local.txt
+rm -f /tmp/lecture-heures-minutes-reseau.txt
+rm -f /tmp/lecture-heures-minutes-ftp.txt
+rm -f /tmp/lecture-heures-minutes-ftps.txt
+rm -f /tmp/lecture-heures-minutes-sftp.txt
+
+}
+
+#############################################################################
+# Fonction Lecture Sauvegarde simultanément Pour Sauvegarde SFTP
+#############################################################################
+
+lecture_information_sauvegarde_simultane_sftp()
+{
+
+fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
+
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_local
+where uname='`uname -n`' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-local.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-local.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-local.txt
+
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_reseau
+where uname='`uname -n`' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-reseau.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-reseau.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-reseau.txt
+
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_ftp
+where uname='`uname -n`' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-ftp.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-ftp.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-ftp.txt
+
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_ftps
+where uname='`uname -n`' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-ftps.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-ftps.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-ftps.txt
+
+rm -f $fichtemp
+
+cat <<- EOF > $fichtemp
+select heures,minutes
+from sauvegarde_sftp
+where uname='`uname -n`' and application!='centreon' ;
+EOF
+
+mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp >/tmp/lecture-heures-minutes-sftp.txt
+
+sed -i '1d' /tmp/lecture-heures-minutes-sftp.txt
+sed -i "s/\t//ig" /tmp/lecture-heures-minutes-sftp.txt
+
+rm -f $fichtemp
+
+cat /tmp/lecture-heures-minutes-local.txt > /tmp/lecture-heures-minutes.txt
+cat /tmp/lecture-heures-minutes-reseau.txt >> /tmp/lecture-heures-minutes.txt
+cat /tmp/lecture-heures-minutes-ftp.txt >> /tmp/lecture-heures-minutes.txt
+cat /tmp/lecture-heures-minutes-ftps.txt >> /tmp/lecture-heures-minutes.txt
+cat /tmp/lecture-heures-minutes-sftp.txt >> /tmp/lecture-heures-minutes.txt
+	    
+rm -f /tmp/lecture-heures-minutes-local.txt
+rm -f /tmp/lecture-heures-minutes-reseau.txt
+rm -f /tmp/lecture-heures-minutes-ftp.txt
+rm -f /tmp/lecture-heures-minutes-ftps.txt
+rm -f /tmp/lecture-heures-minutes-sftp.txt
 
 }
 
@@ -2057,6 +2393,7 @@ lecture_information_sauvegarde_reseau
 lecture_information_sauvegarde_ftp
 lecture_information_sauvegarde_ftps
 lecture_information_sauvegarde_sftp
+lecture_information_cron
 
 
 cat <<- EOF > $REPERTOIRE_CRON/$FICHIER_CRON_SAUVEGARDE
@@ -2571,7 +2908,7 @@ case $valret in
 	VARSAISI12=$(sed -n 3p $fichtemp)
 	VARSAISI13=$(sed -n 4p $fichtemp)
 	VARSAISI14=$(sed -n 5p $fichtemp)
-	
+
 
 	sed -i "s/VAR10=$VAR10/VAR10=$VARSAISI10/g" $REPERTOIRE_CONFIG/$FICHIER_CENTRALISATION_SAUVEGARDE
 	sed -i "s/VAR11=$VAR11/VAR11=$VARSAISI11/g" $REPERTOIRE_CONFIG/$FICHIER_CENTRALISATION_SAUVEGARDE
@@ -2579,19 +2916,18 @@ case $valret in
 	sed -i "s/VAR13=$VAR13/VAR13=$VARSAISI13/g" $REPERTOIRE_CONFIG/$FICHIER_CENTRALISATION_SAUVEGARDE
 	sed -i "s/VAR14=$VAR14/VAR14=$VARSAISI14/g" $REPERTOIRE_CONFIG/$FICHIER_CENTRALISATION_SAUVEGARDE
 
-      
+
 	cat <<- EOF > /tmp/databases.txt
-	SHOW DATABASES;
+	SHOW DATABASES ;
 	EOF
 
 	mysql -h $VARSAISI10 -P $VARSAISI11 -u $VARSAISI13 -p$VARSAISI14 < /tmp/databases.txt &>/tmp/resultat.txt
 
 	if grep -w "^$VARSAISI12" /tmp/resultat.txt > /dev/null ; then
-	sed -i "s/VAR15=$VAR15/VAR15=OUI/g" $REPERTOIRE_CONFIG/$FICHIER_CENTRALISATION_SAUVEGARDE
-
+		sed -i "s/VAR15=$VAR15/VAR15=OUI/g" $REPERTOIRE_CONFIG/$FICHIER_CENTRALISATION_SAUVEGARDE
 	else
-	sed -i "s/VAR15=$VAR15/VAR15=NON/g" $REPERTOIRE_CONFIG/$FICHIER_CENTRALISATION_SAUVEGARDE
-	message_erreur
+		sed -i "s/VAR15=$VAR15/VAR15=NON/g" $REPERTOIRE_CONFIG/$FICHIER_CENTRALISATION_SAUVEGARDE
+		message_erreur
 	fi
 
 	rm -f /tmp/databases.txt
@@ -2621,8 +2957,8 @@ menu_configuration_sauvegarde_centreon()
 {
 
 lecture_information_base_donnees_centreon
-lecture_information_cron
 lecture_information_erreur
+lecture_information_cron
 verification_couleur
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
@@ -2690,7 +3026,7 @@ case $valret in
 			menu_configuration_sauvegarde_centreon
 		fi
 	fi
-	
+
 	# Execution Sauvegarde Reseau 
 	if [ "$choix" = "6" ]
 	then
@@ -2821,7 +3157,7 @@ case $valret in
 	rm -f $fichtemp
 
 	cat <<- EOF > $fichtemp
-	select distinct schema_name from information_schema.SCHEMATA;
+	select distinct schema_name from information_schema.SCHEMATA ;
 	EOF
 
 	mysql -h `uname -n` -u $VARSAISI10 -p$VARSAISI11 < $fichtemp >/tmp/resultat.txt 2>&1
@@ -2969,6 +3305,7 @@ if [ "$nombre_bases_lister" = "0" ] ; then
 	message_erreur
 else
 
+lecture_information_sauvegarde_simultane_local
 lecture_information_sauvegarde_local
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
@@ -2999,44 +3336,67 @@ case $valret in
 	VARSAISI14=$(sed -n 5p $fichtemp)
 	VARSAISI15=$REF35
 
-	
-	HEURE_MINUTE=$VARSAISI11$VARSAISI12
-	menu_origine=Local
-	
-	rm -f $fichtemp
-	verification_sauvegarde_simultane
 
+	resultat=$(grep -c "$VARSAISI11$VARSAISI12" /tmp/lecture-heures-minutes.txt)
 
-	cat <<- EOF > $fichtemp
-	delete from sauvegarde_local
-	where uname='`uname -n`' and application='centreon' ;
-	EOF
+	if [ "$resultat" -ge "$SAUVEGARDE_SIMULTANE" ] ; then
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+		cat <<- EOF > $fichtemp
+		update sauvegarde_local
+		set cron_activer='non', erreur='oui'
+		where uname='`uname -n`' and application='centreon' ;
+		EOF
 
-	rm -f $fichtemp
-	
-	cat <<- EOF > $fichtemp
-	insert into sauvegarde_local ( uname, chemin, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
-	values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , 'oui' , 'non' , 'centreon' ) ;
-	EOF
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+		rm -f $fichtemp
 
-	rm -f $fichtemp
+		cat <<- EOF > $fichtemp
+		alter table sauvegarde_local order by application ;
+		alter table sauvegarde_local order by uname ;
+		EOF
 
-	cat <<- EOF > $fichtemp
-	alter table sauvegarde_local order by application ;
-	alter table sauvegarde_local order by uname ;
-	EOF
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+		rm -f $fichtemp
 
-	rm -f $fichtemp
+		creation_fichier_cron_sauvegarde
+    		message_erreur_sauvegarde_simultane
+		menu_configuration_sauvegarde_centreon
 
-	creation_script_sauvegarde_local
-	creation_fichier_cron_sauvegarde
-	creation_execution_script_purge_local
+	else
+
+		cat <<- EOF > $fichtemp
+		delete from sauvegarde_local
+		where uname='`uname -n`' and application='centreon' ;
+		EOF
+
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+		rm -f $fichtemp
+
+		cat <<- EOF > $fichtemp
+		insert into sauvegarde_local ( uname, chemin, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+		values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , 'oui' , 'non' , 'centreon' ) ;
+		EOF
+
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+		rm -f $fichtemp
+
+		cat <<- EOF > $fichtemp
+		alter table sauvegarde_local order by application ;
+		alter table sauvegarde_local order by uname ;
+		EOF
+
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+		rm -f $fichtemp
+
+		creation_script_sauvegarde_local
+		creation_fichier_cron_sauvegarde
+		creation_execution_script_purge_local
+	fi
 	;;
 
  3)	# Désactivation Sauvegarde Local
@@ -3048,43 +3408,66 @@ case $valret in
 	VARSAISI15=$REF35
 
 
-	HEURE_MINUTE=$VARSAISI11$VARSAISI12
-	menu_origine=Local
-	
-	rm -f $fichtemp
-	verification_sauvegarde_simultane
+	resultat=$(grep -c "$VARSAISI11$VARSAISI12" /tmp/lecture-heures-minutes.txt)
 
+	if [ "$resultat" -ge "$SAUVEGARDE_SIMULTANE" ] ; then
 
-	cat <<- EOF > $fichtemp
-	delete from sauvegarde_local
-	where uname='`uname -n`' and application='centreon' ;
-	EOF
+		cat <<- EOF > $fichtemp
+		update sauvegarde_local
+		set cron_activer='non', erreur='oui'
+		where uname='`uname -n`' and application='centreon' ;
+		EOF
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-	rm -f $fichtemp
-	
-	cat <<- EOF > $fichtemp
-	insert into sauvegarde_local ( uname, chemin, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
-	values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , 'non' , 'non' , 'centreon' ) ;
-	EOF
+		rm -f $fichtemp
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+		cat <<- EOF > $fichtemp
+		alter table sauvegarde_local order by application ;
+		alter table sauvegarde_local order by uname ;
+		EOF
 
-	rm -f $fichtemp
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-	cat <<- EOF > $fichtemp
-	alter table sauvegarde_local order by application ;
-	alter table sauvegarde_local order by uname ;
-	EOF
+		rm -f $fichtemp
 
-	mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+		creation_fichier_cron_sauvegarde
+    		message_erreur_sauvegarde_simultane
+		menu_configuration_sauvegarde_centreon
 
-	rm -f $fichtemp
+	else
 
-	creation_script_sauvegarde_local
-	creation_fichier_cron_sauvegarde
-	creation_execution_script_purge_local
+		cat <<- EOF > $fichtemp
+		delete from sauvegarde_local
+		where uname='`uname -n`' and application='centreon' ;
+		EOF
+
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+		rm -f $fichtemp
+
+		cat <<- EOF > $fichtemp
+		insert into sauvegarde_local ( uname, chemin, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+		values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , 'non' , 'non' , 'centreon' ) ;
+		EOF
+
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+		rm -f $fichtemp
+
+		cat <<- EOF > $fichtemp
+		alter table sauvegarde_local order by application ;
+		alter table sauvegarde_local order by uname ;
+		EOF
+
+		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+		rm -f $fichtemp
+
+		creation_script_sauvegarde_local
+		creation_fichier_cron_sauvegarde
+		creation_execution_script_purge_local
+	fi
 	;;
 
  1)	# Appuyé sur Touche CTRL C
@@ -3115,6 +3498,7 @@ if [ "$nombre_bases_lister" = "0" ] ; then
 	message_erreur
 else
 
+lecture_information_sauvegarde_simultane_reseau
 lecture_information_sauvegarde_reseau
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
@@ -3153,70 +3537,96 @@ case $valret in
 	VARSAISI18=$REF48
 
 
-	HEURE_MINUTE=$VARSAISI14$VARSAISI15
-	menu_origine=Reseau
-	
-	rm -f $fichtemp
-	verification_sauvegarde_simultane
-
+	resultat=$(grep -c "$VARSAISI14$VARSAISI15" /tmp/lecture-heures-minutes.txt)
 
 	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
 	if [ $? -eq 0 ] ; then
-	
+
 		if ! grep "/mnt/verification-mount" /etc/mtab &>/dev/null ; then
 			mkdir -p /mnt/verification-mount
 			mount -t $CLIENT_SMB -o username=$VARSAISI12,password=$VARSAISI13 //$VARSAISI10/$VARSAISI11 /mnt/verification-mount &>/dev/null
 		fi
 
 		if grep "/mnt/verification-mount" /etc/mtab &>/dev/null ; then
-			
-			cat <<- EOF > $fichtemp
-			delete from sauvegarde_reseau
-			where uname='`uname -n`' and application='centreon' ;
-			EOF
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+			if [ "$resultat" -ge "$SAUVEGARDE_SIMULTANE" ] ; then
 
-			rm -f $fichtemp
-	
-			cat <<- EOF > $fichtemp
-			insert into sauvegarde_reseau ( uname, serveur, partage, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
-			values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'oui' , 'non' , 'centreon' ) ;
-			EOF
+				cat <<- EOF > $fichtemp
+				update sauvegarde_reseau
+				set cron_activer='non', erreur='oui'
+				where uname='`uname -n`' and application='centreon' ;
+				EOF
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-			rm -f $fichtemp
+				rm -f $fichtemp
 
-			cat <<- EOF > $fichtemp
-			alter table sauvegarde_reseau order by application ;
-			alter table sauvegarde_reseau order by uname ;
-			EOF
+				cat <<- EOF > $fichtemp
+				alter table sauvegarde_reseau order by application ;
+				alter table sauvegarde_reseau order by uname ;
+				EOF
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-			rm -f $fichtemp
+				rm -f $fichtemp
 
-			umount /mnt/verification-mount -l
-			rm -rf /mnt/verification-mount
+				umount /mnt/verification-mount -l
+				rm -rf /mnt/verification-mount
 
-			creation_script_sauvegarde_reseau
-			creation_fichier_cron_sauvegarde
-			creation_execution_script_purge_reseau
+				creation_fichier_cron_sauvegarde
+    				message_erreur_sauvegarde_simultane
+				menu_configuration_sauvegarde_centreon
+
+			else
+
+				cat <<- EOF > $fichtemp
+				delete from sauvegarde_reseau
+				where uname='`uname -n`' and application='centreon' ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				insert into sauvegarde_reseau ( uname, serveur, partage, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+				values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'oui' , 'non' , 'centreon' ) ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				alter table sauvegarde_reseau order by application ;
+				alter table sauvegarde_reseau order by uname ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				umount /mnt/verification-mount -l
+				rm -rf /mnt/verification-mount
+
+				creation_script_sauvegarde_reseau
+				creation_fichier_cron_sauvegarde
+				creation_execution_script_purge_reseau
+			fi
 
 		else
 
 			cat <<- EOF > $fichtemp
-			update sauvegarde_reseau 
-			set cron_activer='non', erreur='oui' 
+			update sauvegarde_reseau
+			set cron_activer='non', erreur='oui'
 			where uname='`uname -n`' and application='centreon' ;
 			EOF
 
 			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
 			rm -f $fichtemp
-	
+
 			cat <<- EOF > $fichtemp
 			alter table sauvegarde_reseau order by application ;
 			alter table sauvegarde_reseau order by uname ;
@@ -3234,15 +3644,15 @@ case $valret in
 	else
 
 		cat <<- EOF > $fichtemp
-		update sauvegarde_reseau 
-		set cron_activer='non', erreur='oui' 
+		update sauvegarde_reseau
+		set cron_activer='non', erreur='oui'
 		where uname='`uname -n`' and application='centreon' ;
 		EOF
 
 		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
 		rm -f $fichtemp
-	
+
 		cat <<- EOF > $fichtemp
 		alter table sauvegarde_reseau order by application ;
 		alter table sauvegarde_reseau order by uname ;
@@ -3270,17 +3680,12 @@ case $valret in
 	VARSAISI18=$REF48
 
 
-	HEURE_MINUTE=$VARSAISI14$VARSAISI15
-	menu_origine=Reseau
-	
-	rm -f $fichtemp
-	verification_sauvegarde_simultane
-
+	resultat=$(grep -c "$VARSAISI14$VARSAISI15" /tmp/lecture-heures-minutes.txt)
 
 	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
 	if [ $? -eq 0 ] ; then
-	
+
 		if ! grep "/mnt/verification-mount" /etc/mtab &>/dev/null ; then
 			mkdir -p /mnt/verification-mount
 			mount -t $CLIENT_SMB -o username=$VARSAISI12,password=$VARSAISI13 //$VARSAISI10/$VARSAISI11 /mnt/verification-mount &>/dev/null
@@ -3288,52 +3693,83 @@ case $valret in
 
 		if grep "/mnt/verification-mount" /etc/mtab &>/dev/null ; then
 
-			cat <<- EOF > $fichtemp
-			delete from sauvegarde_reseau
-			where uname='`uname -n`' and application='centreon' ;
-			EOF
+			if [ "$resultat" -ge "$SAUVEGARDE_SIMULTANE" ] ; then
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+				cat <<- EOF > $fichtemp
+				update sauvegarde_reseau
+				set cron_activer='non', erreur='oui'
+				where uname='`uname -n`' and application='centreon' ;
+				EOF
 
-			rm -f $fichtemp
-	
-			cat <<- EOF > $fichtemp
-			insert into sauvegarde_reseau ( uname, serveur, partage, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
-			values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'non' , 'non' , 'centreon' ) ;
-			EOF
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+				rm -f $fichtemp
 
-			rm -f $fichtemp
+				cat <<- EOF > $fichtemp
+				alter table sauvegarde_reseau order by application ;
+				alter table sauvegarde_reseau order by uname ;
+				EOF
 
-			cat <<- EOF > $fichtemp
-			alter table sauvegarde_reseau order by application ;
-			alter table sauvegarde_reseau order by uname ;
-			EOF
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+				rm -f $fichtemp
 
-			rm -f $fichtemp
+				umount /mnt/verification-mount -l
+				rm -rf /mnt/verification-mount
 
-			umount /mnt/verification-mount -l
-			rm -rf /mnt/verification-mount
+				creation_fichier_cron_sauvegarde
+    				message_erreur_sauvegarde_simultane
+				menu_configuration_sauvegarde_centreon
 
-			creation_script_sauvegarde_reseau
-			creation_fichier_cron_sauvegarde
-			creation_execution_script_purge_reseau
+			else
+
+				cat <<- EOF > $fichtemp
+				delete from sauvegarde_reseau
+				where uname='`uname -n`' and application='centreon' ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				insert into sauvegarde_reseau ( uname, serveur, partage, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+				values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , 'non' , 'non' , 'centreon' ) ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				alter table sauvegarde_reseau order by application ;
+				alter table sauvegarde_reseau order by uname ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				umount /mnt/verification-mount -l
+				rm -rf /mnt/verification-mount
+
+				creation_script_sauvegarde_reseau
+				creation_fichier_cron_sauvegarde
+				creation_execution_script_purge_reseau
+			fi
 
 		else
 
 			cat <<- EOF > $fichtemp
-			update sauvegarde_reseau 
-			set cron_activer='non', erreur='oui' 
+			update sauvegarde_reseau
+			set cron_activer='non', erreur='oui'
 			where uname='`uname -n`' and application='centreon' ;
 			EOF
 
 			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
 			rm -f $fichtemp
-	
+
 			cat <<- EOF > $fichtemp
 			alter table sauvegarde_reseau order by application ;
 			alter table sauvegarde_reseau order by uname ;
@@ -3351,15 +3787,15 @@ case $valret in
 	else
 
 		cat <<- EOF > $fichtemp
-		update sauvegarde_reseau 
-		set cron_activer='non', erreur='oui' 
+		update sauvegarde_reseau
+		set cron_activer='non', erreur='oui'
 		where uname='`uname -n`' and application='centreon' ;
 		EOF
 
 		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
 		rm -f $fichtemp
-	
+
 		cat <<- EOF > $fichtemp
 		alter table sauvegarde_reseau order by application ;
 		alter table sauvegarde_reseau order by uname ;
@@ -3399,8 +3835,8 @@ menu_configuration_sauvegarde_centreon
 menu_configuration_sauvegarde_centreon_ftp_ftps_sftp()
 {
 
-lecture_information_cron
 lecture_information_erreur
+lecture_information_cron
 verification_couleur
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
@@ -3571,6 +4007,7 @@ if [ "$nombre_bases_lister" = "0" ] ; then
 	message_erreur
 else
 
+lecture_information_sauvegarde_simultane_ftp
 lecture_information_sauvegarde_ftp
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
@@ -3611,72 +4048,125 @@ case $valret in
 	VARSAISI19=$REF59
 
 
-	HEURE_MINUTE=$VARSAISI15$VARSAISI16
-	menu_origine=FTP
-	
-	rm -f $fichtemp
-	verification_sauvegarde_simultane
+	resultat=$(grep -c "$VARSAISI15$VARSAISI16" /tmp/lecture-heures-minutes.txt)
 
+	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
-	cat <<- EOF > $fichtemp
-	open $VARSAISI10 $VARSAISI11
-	user $VARSAISI13 $VARSAISI14
-	bye
-	quit
-	EOF
-
-	ftp -i -n -z nossl< $fichtemp > verification-connexion-ftp.txt 2>&1
-
-	verification_connexion_ftp=`cat verification-connexion-ftp.txt`
-
-	rm -f verification-connexion-ftp.txt
-	rm -f $fichtemp
-
-	if [ -z "$verification_connexion_ftp" ] ; then
+	if [ $? -eq 0 ] ; then
 
 		cat <<- EOF > $fichtemp
-		delete from sauvegarde_ftp
-		where uname='`uname -n`' and application='centreon' ;
+		open $VARSAISI10 $VARSAISI11
+		user $VARSAISI13 $VARSAISI14
+		bye
+		quit
 		EOF
 
-		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+		ftp -i -n -z nossl< $fichtemp > verification-connexion-ftp.txt 2>&1
 
-		rm -f $fichtemp
-	
-		cat <<- EOF > $fichtemp
-		insert into sauvegarde_ftp ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
-		values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'oui' , 'non' , 'centreon' ) ;
-		EOF
+		verification_connexion_ftp=`cat verification-connexion-ftp.txt`
 
-		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
-
+		rm -f verification-connexion-ftp.txt
 		rm -f $fichtemp
 
-		cat <<- EOF > $fichtemp
-		alter table sauvegarde_ftp order by application ;
-		alter table sauvegarde_ftp order by uname ;
-		EOF
+		if [ -z "$verification_connexion_ftp" ] ; then
 
-		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+			if [ "$resultat" -ge "$SAUVEGARDE_SIMULTANE" ] ; then
 
-		rm -f $fichtemp
+				cat <<- EOF > $fichtemp
+				update sauvegarde_ftp
+				set cron_activer='non', erreur='oui'
+				where uname='`uname -n`' and application='centreon' ;
+				EOF
 
-		creation_script_sauvegarde_ftp
-		creation_fichier_cron_sauvegarde
-		creation_execution_script_purge_ftp 
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				alter table sauvegarde_ftp order by application ;
+				alter table sauvegarde_ftp order by uname ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				creation_fichier_cron_sauvegarde
+				message_erreur_sauvegarde_simultane
+				menu_configuration_sauvegarde_centreon_ftp_ftps_sftp
+
+			else
+
+				cat <<- EOF > $fichtemp
+				delete from sauvegarde_ftp
+				where uname='`uname -n`' and application='centreon' ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				insert into sauvegarde_ftp ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+				values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'oui' , 'non' , 'centreon' ) ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				alter table sauvegarde_ftp order by application ;
+				alter table sauvegarde_ftp order by uname ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				creation_script_sauvegarde_ftp
+				creation_fichier_cron_sauvegarde
+				creation_execution_script_purge_ftp 
+			fi
+
+		else
+
+			cat <<- EOF > $fichtemp
+			update sauvegarde_ftp
+			set cron_activer='non', erreur='oui'
+			where uname='`uname -n`' and application='centreon' ;
+			EOF
+
+			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+			rm -f $fichtemp
+
+			cat <<- EOF > $fichtemp
+			alter table sauvegarde_ftp order by application ;
+			alter table sauvegarde_ftp order by uname ;
+			EOF
+
+			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+			rm -f $fichtemp
+
+			creation_fichier_cron_sauvegarde
+			message_erreur_serveur_ftp
+			menu_configuration_sauvegarde_centreon_ftp_ftps_sftp
+		fi
 
 	else
-		
+
 		cat <<- EOF > $fichtemp
-		update sauvegarde_ftp 
-		set cron_activer='non', erreur='oui' 
+		update sauvegarde_ftp
+		set cron_activer='non', erreur='oui'
 		where uname='`uname -n`' and application='centreon' ;
 		EOF
 
 		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
 		rm -f $fichtemp
-	
+
 		cat <<- EOF > $fichtemp
 		alter table sauvegarde_ftp order by application ;
 		alter table sauvegarde_ftp order by uname ;
@@ -3705,72 +4195,125 @@ case $valret in
 	VARSAISI19=$REF59
 
 
-	HEURE_MINUTE=$VARSAISI15$VARSAISI16
-	menu_origine=FTP
-	
-	rm -f $fichtemp
-	verification_sauvegarde_simultane
+	resultat=$(grep -c "$VARSAISI15$VARSAISI16" /tmp/lecture-heures-minutes.txt)
 
+	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
-	cat <<- EOF > $fichtemp
-	open $VARSAISI10 $VARSAISI11
-	user $VARSAISI13 $VARSAISI14
-	bye
-	quit
-	EOF
-
-	ftp -i -n -z nossl< $fichtemp > verification-connexion-ftp.txt 2>&1
-
-	verification_connexion_ftp=`cat verification-connexion-ftp.txt`
-
-	rm -f verification-connexion-ftp.txt
-	rm -f $fichtemp
-
-	if [ -z "$verification_connexion_ftp" ] ; then
+	if [ $? -eq 0 ] ; then
 
 		cat <<- EOF > $fichtemp
-		delete from sauvegarde_ftp
-		where uname='`uname -n`' and application='centreon' ;
+		open $VARSAISI10 $VARSAISI11
+		user $VARSAISI13 $VARSAISI14
+		bye
+		quit
 		EOF
 
-		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+		ftp -i -n -z nossl< $fichtemp > verification-connexion-ftp.txt 2>&1
 
-		rm -f $fichtemp
-	
-		cat <<- EOF > $fichtemp
-		insert into sauvegarde_ftp ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
-		values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'non' , 'non' , 'centreon' ) ;
-		EOF
+		verification_connexion_ftp=`cat verification-connexion-ftp.txt`
 
-		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
-
+		rm -f verification-connexion-ftp.txt
 		rm -f $fichtemp
 
-		cat <<- EOF > $fichtemp
-		alter table sauvegarde_ftp order by application ;
-		alter table sauvegarde_ftp order by uname ;
-		EOF
+		if [ -z "$verification_connexion_ftp" ] ; then
 
-		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+			if [ "$resultat" -ge "$SAUVEGARDE_SIMULTANE" ] ; then
 
-		rm -f $fichtemp
+				cat <<- EOF > $fichtemp
+				update sauvegarde_ftp
+				set cron_activer='non', erreur='oui'
+				where uname='`uname -n`' and application='centreon' ;
+				EOF
 
-		creation_script_sauvegarde_ftp
-		creation_fichier_cron_sauvegarde
-		creation_execution_script_purge_ftp
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				alter table sauvegarde_ftp order by application ;
+				alter table sauvegarde_ftp order by uname ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				creation_fichier_cron_sauvegarde
+				message_erreur_sauvegarde_simultane
+				menu_configuration_sauvegarde_centreon_ftp_ftps_sftp
+
+			else
+
+				cat <<- EOF > $fichtemp
+				delete from sauvegarde_ftp
+				where uname='`uname -n`' and application='centreon' ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				insert into sauvegarde_ftp ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+				values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'non' , 'non' , 'centreon' ) ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				alter table sauvegarde_ftp order by application ;
+				alter table sauvegarde_ftp order by uname ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				creation_script_sauvegarde_ftp
+				creation_fichier_cron_sauvegarde
+				creation_execution_script_purge_ftp
+			fi
+
+		else
+		
+			cat <<- EOF > $fichtemp
+			update sauvegarde_ftp
+			set cron_activer='non', erreur='oui'
+			where uname='`uname -n`' and application='centreon' ;
+			EOF
+
+			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+			rm -f $fichtemp
+
+			cat <<- EOF > $fichtemp
+			alter table sauvegarde_ftp order by application ;
+			alter table sauvegarde_ftp order by uname ;
+			EOF
+
+			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+			rm -f $fichtemp
+
+			creation_fichier_cron_sauvegarde
+			message_erreur_serveur_ftp
+			menu_configuration_sauvegarde_centreon_ftp_ftps_sftp
+		fi
 
 	else
-		
+
 		cat <<- EOF > $fichtemp
-		update sauvegarde_ftp 
-		set cron_activer='non', erreur='oui' 
+		update sauvegarde_ftp
+		set cron_activer='non', erreur='oui'
 		where uname='`uname -n`' and application='centreon' ;
 		EOF
 
 		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
 		rm -f $fichtemp
-	
+
 		cat <<- EOF > $fichtemp
 		alter table sauvegarde_ftp order by application ;
 		alter table sauvegarde_ftp order by uname ;
@@ -3814,6 +4357,7 @@ if [ "$nombre_bases_lister" = "0" ] ; then
 	message_erreur
 else
 
+lecture_information_sauvegarde_simultane_ftps
 lecture_information_sauvegarde_ftps
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
@@ -3854,12 +4398,7 @@ case $valret in
 	VARSAISI19=$REF69
 
 
-	HEURE_MINUTE=$VARSAISI15$VARSAISI16
-	menu_origine=FTPS
-	
-	rm -f $fichtemp
-	verification_sauvegarde_simultane
-
+	resultat=$(grep -c "$VARSAISI15$VARSAISI16" /tmp/lecture-heures-minutes.txt)
 
 	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
@@ -3881,49 +4420,77 @@ case $valret in
 
 		if [ "$verification_connexion_ftps" == "1" ] ; then
 
-			cat <<- EOF > $fichtemp
-			delete from sauvegarde_ftps
-			where uname='`uname -n`' and application='centreon' ;
-			EOF
+			if [ "$resultat" -ge "$SAUVEGARDE_SIMULTANE" ] ; then
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+				cat <<- EOF > $fichtemp
+				update sauvegarde_ftps
+				set cron_activer='non', erreur='oui'
+				where uname='`uname -n`' and application='centreon' ;
+				EOF
 
-			rm -f $fichtemp
-	
-			cat <<- EOF > $fichtemp
-			insert into sauvegarde_ftps ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
-			values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'oui' , 'non' , 'centreon' ) ;
-			EOF
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+				rm -f $fichtemp
 
-			rm -f $fichtemp
+				cat <<- EOF > $fichtemp
+				alter table sauvegarde_ftps order by application ;
+				alter table sauvegarde_ftps order by uname ;
+				EOF
 
-			cat <<- EOF > $fichtemp
-			alter table sauvegarde_ftps order by application ;
-			alter table sauvegarde_ftps order by uname ;
-			EOF
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+				rm -f $fichtemp
 
-			rm -f $fichtemp
+				creation_fichier_cron_sauvegarde
+				message_erreur_sauvegarde_simultane
+				menu_configuration_sauvegarde_centreon_ftp_ftps_sftp
 
-			creation_script_sauvegarde_ftps
-			creation_fichier_cron_sauvegarde
-			creation_execution_script_purge_ftps 
+			else
+
+				cat <<- EOF > $fichtemp
+				delete from sauvegarde_ftps
+				where uname='`uname -n`' and application='centreon' ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				insert into sauvegarde_ftps ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+				values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'oui' , 'non' , 'centreon' ) ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				alter table sauvegarde_ftps order by application ;
+				alter table sauvegarde_ftps order by uname ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				creation_script_sauvegarde_ftps
+				creation_fichier_cron_sauvegarde
+				creation_execution_script_purge_ftps 
+			fi
 
 		else
-		
+
 			cat <<- EOF > $fichtemp
-			update sauvegarde_ftps 
-			set cron_activer='non', erreur='oui' 
+			update sauvegarde_ftps
+			set cron_activer='non', erreur='oui'
 			where uname='`uname -n`' and application='centreon' ;
 			EOF
 
 			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
 			rm -f $fichtemp
-	
+
 			cat <<- EOF > $fichtemp
 			alter table sauvegarde_ftps order by application ;
 			alter table sauvegarde_ftps order by uname ;
@@ -3939,17 +4506,17 @@ case $valret in
 		fi
 
 	else
-	
+
 		cat <<- EOF > $fichtemp
-		update sauvegarde_ftps 
-		set cron_activer='non', erreur='oui' 
+		update sauvegarde_ftps
+		set cron_activer='non', erreur='oui'
 		where uname='`uname -n`' and application='centreon' ;
 		EOF
 
 		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
 		rm -f $fichtemp
-	
+
 		cat <<- EOF > $fichtemp
 		alter table sauvegarde_ftps order by application ;
 		alter table sauvegarde_ftps order by uname ;
@@ -3978,12 +4545,7 @@ case $valret in
 	VARSAISI19=$REF69
 
 
-	HEURE_MINUTE=$VARSAISI15$VARSAISI16
-	menu_origine=FTPS
-	
-	rm -f $fichtemp
-	verification_sauvegarde_simultane
-
+	resultat=$(grep -c "$VARSAISI15$VARSAISI16" /tmp/lecture-heures-minutes.txt)
 
 	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
@@ -4005,49 +4567,77 @@ case $valret in
 
 		if [ "$verification_connexion_ftps" == "1" ] ; then
 
-			cat <<- EOF > $fichtemp
-			delete from sauvegarde_ftps
-			where uname='`uname -n`' and application='centreon' ;
-			EOF
+			if [ "$resultat" -ge "$SAUVEGARDE_SIMULTANE" ] ; then
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+				cat <<- EOF > $fichtemp
+				update sauvegarde_ftps
+				set cron_activer='non', erreur='oui'
+				where uname='`uname -n`' and application='centreon' ;
+				EOF
 
-			rm -f $fichtemp
-	
-			cat <<- EOF > $fichtemp
-			insert into sauvegarde_ftps ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
-			values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'non' , 'non' , 'centreon' ) ;
-			EOF
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+				rm -f $fichtemp
 
-			rm -f $fichtemp
+				cat <<- EOF > $fichtemp
+				alter table sauvegarde_ftps order by application ;
+				alter table sauvegarde_ftps order by uname ;
+				EOF
 
-			cat <<- EOF > $fichtemp
-			alter table sauvegarde_ftps order by application ;
-			alter table sauvegarde_ftps order by uname ;
-			EOF
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+				rm -f $fichtemp
 
-			rm -f $fichtemp
+				creation_fichier_cron_sauvegarde
+				message_erreur_sauvegarde_simultane
+				menu_configuration_sauvegarde_centreon_ftp_ftps_sftp
 
-			creation_script_sauvegarde_ftps
-			creation_fichier_cron_sauvegarde
-			creation_execution_script_purge_ftps
+			else
+
+				cat <<- EOF > $fichtemp
+				delete from sauvegarde_ftps
+				where uname='`uname -n`' and application='centreon' ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				insert into sauvegarde_ftps ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+				values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'non' , 'non' , 'centreon' ) ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				alter table sauvegarde_ftps order by application ;
+				alter table sauvegarde_ftps order by uname ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				creation_script_sauvegarde_ftps
+				creation_fichier_cron_sauvegarde
+				creation_execution_script_purge_ftps
+			fi
 
 		else
-		
+
 			cat <<- EOF > $fichtemp
-			update sauvegarde_ftps 
-			set cron_activer='non', erreur='oui' 
+			update sauvegarde_ftps
+			set cron_activer='non', erreur='oui'
 			where uname='`uname -n`' and application='centreon' ;
 			EOF
 
 			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
 			rm -f $fichtemp
-	
+
 			cat <<- EOF > $fichtemp
 			alter table sauvegarde_ftps order by application ;
 			alter table sauvegarde_ftps order by uname ;
@@ -4065,15 +4655,15 @@ case $valret in
 	else
 		
 		cat <<- EOF > $fichtemp
-		update sauvegarde_ftps 
-		set cron_activer='non', erreur='oui' 
+		update sauvegarde_ftps
+		set cron_activer='non', erreur='oui'
 		where uname='`uname -n`' and application='centreon' ;
 		EOF
 
 		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
 		rm -f $fichtemp
-	
+
 		cat <<- EOF > $fichtemp
 		alter table sauvegarde_ftps order by application ;
 		alter table sauvegarde_ftps order by uname ;
@@ -4117,6 +4707,7 @@ if [ "$nombre_bases_lister" = "0" ] ; then
 	message_erreur
 else
 
+lecture_information_sauvegarde_simultane_sftp
 lecture_information_sauvegarde_sftp
 
 fichtemp=`tempfile 2>/dev/null` || fichtemp=/tmp/test$$
@@ -4157,12 +4748,7 @@ case $valret in
 	VARSAISI19=$REF79
 
 
-	HEURE_MINUTE=$VARSAISI15$VARSAISI16
-	menu_origine=SFTP
-	
-	rm -f $fichtemp
-	verification_sauvegarde_simultane
-
+	resultat=$(grep -c "$VARSAISI15$VARSAISI16" /tmp/lecture-heures-minutes.txt)
 
 	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
@@ -4180,51 +4766,81 @@ case $valret in
 
 		if grep "bye" verification-connexion-sftp.txt &>/dev/null ; then
 
-			cat <<- EOF > $fichtemp
-			delete from sauvegarde_sftp
-			where uname='`uname -n`' and application='centreon' ;
-			EOF
+			if [ "$resultat" -ge "$SAUVEGARDE_SIMULTANE" ] ; then
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+				cat <<- EOF > $fichtemp
+				update sauvegarde_sftp
+				set cron_activer='non', erreur='oui'
+				where uname='`uname -n`' and application='centreon' ;
+				EOF
 
-			rm -f $fichtemp
-	
-			cat <<- EOF > $fichtemp
-			insert into sauvegarde_sftp ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
-			values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'oui' , 'non' , 'centreon' ) ;
-			EOF
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+				rm -f $fichtemp
 
-			rm -f $fichtemp
+				cat <<- EOF > $fichtemp
+				alter table sauvegarde_sftp order by application ;
+				alter table sauvegarde_sftp order by uname ;
+				EOF
 
-			cat <<- EOF > $fichtemp
-			alter table sauvegarde_sftp order by application ;
-			alter table sauvegarde_sftp order by uname ;
-			EOF
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+				rm -f $fichtemp
 
-			rm -f $fichtemp
+				rm -f verification-connexion-sftp.txt
 
-			rm -f verification-connexion-sftp.txt
+				creation_fichier_cron_sauvegarde
+				message_erreur_sauvegarde_simultane
+				menu_configuration_sauvegarde_centreon_ftp_ftps_sftp
 
-			creation_script_sauvegarde_sftp
-			creation_fichier_cron_sauvegarde
-			creation_execution_script_purge_sftp
+			else
+
+				cat <<- EOF > $fichtemp
+				delete from sauvegarde_sftp
+				where uname='`uname -n`' and application='centreon' ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				insert into sauvegarde_sftp ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+				values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'oui' , 'non' , 'centreon' ) ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				alter table sauvegarde_sftp order by application ;
+				alter table sauvegarde_sftp order by uname ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				rm -f verification-connexion-sftp.txt
+
+				creation_script_sauvegarde_sftp
+				creation_fichier_cron_sauvegarde
+				creation_execution_script_purge_sftp
+			fi
 
 		else
-		
+
 			cat <<- EOF > $fichtemp
 			update sauvegarde_sftp
-			set cron_activer='non', erreur='oui' 
+			set cron_activer='non', erreur='oui'
 			where uname='`uname -n`' and application='centreon' ;
 			EOF
 
 			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
 			rm -f $fichtemp
-	
+
 			cat <<- EOF > $fichtemp
 			alter table sauvegarde_sftp order by application ;
 			alter table sauvegarde_sftp order by uname ;
@@ -4244,15 +4860,15 @@ case $valret in
 	else
 	
 		cat <<- EOF > $fichtemp
-		update sauvegarde_sftp 
-		set cron_activer='non', erreur='oui' 
+		update sauvegarde_sftp
+		set cron_activer='non', erreur='oui'
 		where uname='`uname -n`' and application='centreon' ;
 		EOF
 
 		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
 		rm -f $fichtemp
-	
+
 		cat <<- EOF > $fichtemp
 		alter table sauvegarde_sftp order by application ;
 		alter table sauvegarde_sftp order by uname ;
@@ -4281,12 +4897,7 @@ case $valret in
 	VARSAISI19=$REF79
 
 
-	HEURE_MINUTE=$VARSAISI15$VARSAISI16
-	menu_origine=SFTP
-	
-	rm -f $fichtemp
-	verification_sauvegarde_simultane
-
+	resultat=$(grep -c "$VARSAISI15$VARSAISI16" /tmp/lecture-heures-minutes.txt)
 
 	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
@@ -4304,51 +4915,81 @@ case $valret in
 
 		if grep "bye" verification-connexion-sftp.txt &>/dev/null ; then
 
-			cat <<- EOF > $fichtemp
-			delete from sauvegarde_sftp
-			where uname='`uname -n`' and application='centreon' ;
-			EOF
+			if [ "$resultat" -ge "$SAUVEGARDE_SIMULTANE" ] ; then
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+				cat <<- EOF > $fichtemp
+				update sauvegarde_sftp
+				set cron_activer='non', erreur='oui'
+				where uname='`uname -n`' and application='centreon' ;
+				EOF
 
-			rm -f $fichtemp
-	
-			cat <<- EOF > $fichtemp
-			insert into sauvegarde_sftp ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
-			values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'non' , 'non' , 'centreon' ) ;
-			EOF
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+				rm -f $fichtemp
 
-			rm -f $fichtemp
+				cat <<- EOF > $fichtemp
+				alter table sauvegarde_sftp order by application ;
+				alter table sauvegarde_sftp order by uname ;
+				EOF
 
-			cat <<- EOF > $fichtemp
-			alter table sauvegarde_sftp order by application ;
-			alter table sauvegarde_sftp order by uname ;
-			EOF
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
-			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+				rm -f $fichtemp
 
-			rm -f $fichtemp
+				rm -f verification-connexion-sftp.txt
 
-			rm -f verification-connexion-sftp.txt
+				creation_fichier_cron_sauvegarde
+				message_erreur_sauvegarde_simultane
+				menu_configuration_sauvegarde_centreon_ftp_ftps_sftp
 
-			creation_script_sauvegarde_sftp
-			creation_fichier_cron_sauvegarde
-			creation_execution_script_purge_sftp
+			else
+
+				cat <<- EOF > $fichtemp
+				delete from sauvegarde_sftp
+				where uname='`uname -n`' and application='centreon' ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				insert into sauvegarde_sftp ( uname, serveur, port, dossier, utilisateur, password, heures, minutes, jours, retentions, purges, cron_activer, erreur, application )
+				values ( '`uname -n`' , '$VARSAISI10' , '$VARSAISI11' , '$VARSAISI12' , '$VARSAISI13' , '$VARSAISI14' , '$VARSAISI15' , '$VARSAISI16' , '$VARSAISI17' , '$VARSAISI18' , '$VARSAISI19' , 'non' , 'non' , 'centreon' ) ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				cat <<- EOF > $fichtemp
+				alter table sauvegarde_sftp order by application ;
+				alter table sauvegarde_sftp order by uname ;
+				EOF
+
+				mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
+
+				rm -f $fichtemp
+
+				rm -f verification-connexion-sftp.txt
+
+				creation_script_sauvegarde_sftp
+				creation_fichier_cron_sauvegarde
+				creation_execution_script_purge_sftp
+			fi
 
 		else
-		
+
 			cat <<- EOF > $fichtemp
 			update sauvegarde_sftp
-			set cron_activer='non', erreur='oui' 
+			set cron_activer='non', erreur='oui'
 			where uname='`uname -n`' and application='centreon' ;
 			EOF
 
 			mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
 			rm -f $fichtemp
-	
+
 			cat <<- EOF > $fichtemp
 			alter table sauvegarde_sftp order by application ;
 			alter table sauvegarde_sftp order by uname ;
@@ -4366,17 +5007,17 @@ case $valret in
 		fi
 
 	else
-		
+
 		cat <<- EOF > $fichtemp
-		update sauvegarde_sftp 
-		set cron_activer='non', erreur='oui' 
+		update sauvegarde_sftp
+		set cron_activer='non', erreur='oui'
 		where uname='`uname -n`' and application='centreon' ;
 		EOF
 
 		mysql -h $VAR10 -P $VAR11 -u $VAR13 -p$VAR14 $VAR12 < $fichtemp
 
 		rm -f $fichtemp
-	
+
 		cat <<- EOF > $fichtemp
 		alter table sauvegarde_sftp order by application ;
 		alter table sauvegarde_sftp order by uname ;
