@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 10-05-2014
+# Date : 11-05-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -3352,6 +3352,8 @@ case $valret in
 
 	resultat=$(grep -c "$VARSAISI11$VARSAISI12" /tmp/lecture-heures-minutes.txt)
 
+	rm -f /tmp/lecture-heures-minutes.txt
+
 	if [ "$resultat" -ge "$SAUVEGARDE_SIMULTANE" ] ; then
 
 		cat <<- EOF > $fichtemp
@@ -3422,6 +3424,8 @@ case $valret in
 
 
 	resultat=$(grep -c "$VARSAISI11$VARSAISI12" /tmp/lecture-heures-minutes.txt)
+
+	rm -f /tmp/lecture-heures-minutes.txt
 
 	if [ "$resultat" -ge "$SAUVEGARDE_SIMULTANE" ] ; then
 
@@ -3551,6 +3555,8 @@ case $valret in
 
 
 	resultat=$(grep -c "$VARSAISI14$VARSAISI15" /tmp/lecture-heures-minutes.txt)
+
+	rm -f /tmp/lecture-heures-minutes.txt
 
 	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
@@ -3694,6 +3700,8 @@ case $valret in
 
 
 	resultat=$(grep -c "$VARSAISI14$VARSAISI15" /tmp/lecture-heures-minutes.txt)
+
+	rm -f /tmp/lecture-heures-minutes.txt
 
 	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
@@ -4063,6 +4071,8 @@ case $valret in
 
 	resultat=$(grep -c "$VARSAISI15$VARSAISI16" /tmp/lecture-heures-minutes.txt)
 
+	rm -f /tmp/lecture-heures-minutes.txt
+
 	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
 	if [ $? -eq 0 ] ; then
@@ -4209,6 +4219,8 @@ case $valret in
 
 
 	resultat=$(grep -c "$VARSAISI15$VARSAISI16" /tmp/lecture-heures-minutes.txt)
+
+	rm -f /tmp/lecture-heures-minutes.txt
 
 	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
@@ -4413,6 +4425,8 @@ case $valret in
 
 	resultat=$(grep -c "$VARSAISI15$VARSAISI16" /tmp/lecture-heures-minutes.txt)
 
+	rm -f /tmp/lecture-heures-minutes.txt
+
 	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
 	if [ $? -eq 0 ] ; then
@@ -4559,6 +4573,8 @@ case $valret in
 
 
 	resultat=$(grep -c "$VARSAISI15$VARSAISI16" /tmp/lecture-heures-minutes.txt)
+
+	rm -f /tmp/lecture-heures-minutes.txt
 
 	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
@@ -4763,6 +4779,8 @@ case $valret in
 
 	resultat=$(grep -c "$VARSAISI15$VARSAISI16" /tmp/lecture-heures-minutes.txt)
 
+	rm -f /tmp/lecture-heures-minutes.txt
+
 	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
 	if [ $? -eq 0 ] ; then
@@ -4911,6 +4929,8 @@ case $valret in
 
 
 	resultat=$(grep -c "$VARSAISI15$VARSAISI16" /tmp/lecture-heures-minutes.txt)
+
+	rm -f /tmp/lecture-heures-minutes.txt
 
 	ping -c 4 $VARSAISI10 >/dev/null 2>&1
 
