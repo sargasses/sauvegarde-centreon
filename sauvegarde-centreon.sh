@@ -2,7 +2,7 @@
 #
 # Copyright 2013-2014 
 # Développé par : Stéphane HACQUARD
-# Date : 11-05-2014
+# Date : 15-05-2014
 # Version 1.0
 # Pour plus de renseignements : stephane.hacquard@sargasses.fr
 
@@ -31,7 +31,7 @@ FICHIER_PURGE_CENTREON_FTP=purge_centreon_ftp.sh
 FICHIER_PURGE_CENTREON_FTPS=purge_centreon_ftps.sh
 FICHIER_PURGE_CENTREON_SFTP=purge_centreon_sftp.sh
 
-SAUVEGARDE_SIMULTANE=3
+SAUVEGARDE_SIMULTANE=2
 
 REPERTOIRE_CRON=/etc/cron.d
 FICHIER_CRON_SAUVEGARDE=sauvegarde_centreon
